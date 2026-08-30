@@ -1,0 +1,16 @@
+{
+  "name": "me&my Friends - design system generator",
+  "id": "1625510645002288788",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "index.html",
+  "editorType": [
+    "figma"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  },
+  "documentAccess": "dynamic-page"
+}

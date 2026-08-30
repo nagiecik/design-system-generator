@@ -1,0 +1,1779 @@
+<!doctype html>
+<html>
+
+<head>
+  <style>
+    /* --- GŁÓWNY STYL (DARK MODE) --- */
+    body {
+      font-family: Inter, sans-serif;
+      padding: 20px;
+      color: #e0e0e0;
+      background-color: #121212;
+      margin: 0;
+    }
+
+    h3 {
+      margin: 20px 0 12px 0;
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+      align-items: stretch;
+    }
+
+    .row-label {
+      width: 100%;
+      font-size: 11px;
+      color: #aaa;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .row-content {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      flex-grow: 1;
+      padding: 10px 12px;
+      border: 1px solid #333;
+      background-color: #2c2c2c;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #fff;
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #18a0fb;
+      background-color: #383838;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder {
+      color: #555;
+      font-size: 12px;
+    }
+
+    .twin-inputs {
+      display: flex;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .twin-inputs input {
+      width: 40%;
+    }
+
+    .unit {
+      font-size: 13px;
+      color: #888;
+      font-weight: 500;
+      min-width: 20px;
+      display: none;
+      /* Replaced by unit-tag */
+    }
+
+    .input-with-unit {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+    }
+
+    .input-with-unit input {
+      padding-right: 32px !important;
+      width: 100%;
+    }
+
+    .unit-tag {
+      position: absolute;
+      right: 12px;
+      color: #666;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .field-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+    }
+
+    .field-sublabel {
+      font-size: 9px;
+      color: #777;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    select.font-select {
+      flex-grow: 1;
+      padding: 10px 12px;
+      border: 1px solid #333;
+      background-color: #2c2c2c;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    select.style-select {
+      padding: 6px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    select.font-select:focus {
+      border-color: #18a0fb;
+      background-color: #383838;
+    }
+
+    .color-swatch {
+      width: 60px;
+      height: 38px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      cursor: pointer;
+      background-color: #000;
+      transition:
+        transform 0.1s,
+        border-color 0.2s;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.05);
+      border-color: #fff;
+    }
+
+    button.primary-btn {
+      background: #18a0fb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    button.primary-btn:hover {
+      background: #0d8adb;
+    }
+
+    button.secondary-btn {
+      background: #252525;
+      color: #ccc;
+      border: 1px solid #3c3c3c;
+      padding: 11px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 20px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    button.secondary-btn:hover {
+      background: #333333;
+      color: #fff;
+      border-color: #555;
+    }
+
+    .separator {
+      border-bottom: 1px solid #333;
+      margin: 20px 0;
+    }
+
+    /* --- MODALS --- */
+    #picker-modal, #advanced-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .advanced-content {
+      background: #1e1e1e;
+      color: white;
+      padding: 22px 24px;
+      border-radius: 16px;
+      width: 580px;
+      max-width: 92%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid #333;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .modal-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #eee;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .modal-close-btn:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .modal-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      margin-bottom: 12px;
+    }
+
+    .small-btn {
+      background: #252525;
+      color: #58a6ff;
+      border: 1px solid #3c3c3c;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .small-btn:hover {
+      background: #333333;
+      border-color: #58a6ff;
+      color: #79b8ff;
+    }
+
+    .gradient-card {
+      background: #171717;
+      border: 1px solid #2d2d2d;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .gradient-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .gradient-name-input {
+      background: #222;
+      border: 1px solid #383838;
+      color: #eee;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      flex-grow: 1;
+      font-weight: 500;
+    }
+
+    .gradient-preview-bar {
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      margin-bottom: 10px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .grad-controls-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+      align-items: end;
+    }
+
+    .grad-control-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .grad-control-label {
+      font-size: 10px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .grad-mode-select, .grad-control-input {
+      background: #222;
+      border: 1px solid #383838;
+      color: #eee;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .grad-control-input {
+      padding-right: 16px;
+      text-align: right;
+      font-family: monospace;
+    }
+
+    .stops-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .stop-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e1e1e;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #282828;
+    }
+
+    .stop-label {
+      font-size: 10px;
+      color: #888;
+      width: 44px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .stop-swatch {
+      width: 28px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.1s;
+    }
+
+    .stop-swatch:hover {
+      transform: scale(1.06);
+      border-color: #fff;
+    }
+
+    .stop-hex-input {
+      background: #252525;
+      border: 1px solid #383838;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      width: 64px;
+      text-align: center;
+    }
+
+    .stop-percent-wrap {
+      width: 58px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .stop-percent-input {
+      background: #252525;
+      border: 1px solid #383838;
+      color: #fff;
+      padding: 4px 16px 4px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      width: 100%;
+      text-align: right;
+      box-sizing: border-box;
+    }
+
+    .icon-btn-del {
+      background: transparent;
+      border: none;
+      color: #777;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+      margin-left: auto;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .icon-btn-del:hover {
+      color: #ff6467;
+      background: #2a2a2a;
+    }
+
+    .picker-content {
+      background: #1e1e1e;
+      color: white;
+      padding: 24px;
+      border-radius: 16px;
+      width: 280px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid #333;
+    }
+
+    .picker-header {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #eee;
+    }
+
+    .hex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .hex-input {
+      background: #2c2c2c;
+      border: 1px solid #444;
+      color: white;
+      padding: 8px;
+      border-radius: 6px;
+      width: 100px;
+      text-align: center;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    .slider-group {
+      margin-bottom: 18px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      outline: none;
+      margin: 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      border: 2px solid #1e1e1e;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    }
+
+    #hue-slider {
+      background: linear-gradient(to right,
+          #f00,
+          #ff0,
+          #0f0,
+          #0ff,
+          #00f,
+          #f0f,
+          #f00);
+    }
+
+    .picker-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .picker-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      color: #aaa;
+    }
+
+    .btn-apply {
+      background: #d0bcff;
+      color: #381e72;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>me&my Friends - design system generator</h2>
+
+  <h3>Typography & Spacing Scale</h3>
+  <div class="row">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+      <div class="field-stack">
+        <span class="field-sublabel">Corner Radius</span>
+        <select id="radius-preset" class="font-select">
+          <option value="none">Sharp (0px)</option>
+          <option value="compact">Compact (Subtle)</option>
+          <option value="default" selected>Default (Standard)</option>
+          <option value="relaxed">Relaxed (Rounded)</option>
+          <option value="full">Full (Pill / 9999px)</option>
+        </select>
+      </div>
+      <div class="field-stack">
+        <span class="field-sublabel">Spacing Scale</span>
+        <select id="spacing-preset" class="font-select">
+          <option value="compact">Compact (Dense)</option>
+          <option value="default" selected>Default (Standard)</option>
+          <option value="relaxed">Relaxed (Spacious)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">Headers Font</div>
+    <div class="row-content">
+      <select id="headers-font" class="font-select">
+        <option value="Inter">Loading fonts...</option>
+      </select>
+    </div>
+  </div>
+  <div class="row" id="headers-weights-row" style="display: none; margin-top: -6px; margin-bottom: 6px;">
+    <div class="row-label" style="font-size: 11px; color: #888;">Header Styles</div>
+    <div class="row-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; width: 100%;">
+        <div class="field-stack">
+          <span class="field-sublabel">Regular</span>
+          <select id="headers-weight-reg" class="font-select style-select"></select>
+        </div>
+        <div class="field-stack">
+          <span class="field-sublabel">Medium</span>
+          <select id="headers-weight-med" class="font-select style-select"></select>
+        </div>
+        <div class="field-stack">
+          <span class="field-sublabel">Bold</span>
+          <select id="headers-weight-bold" class="font-select style-select"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">Text Font</div>
+    <div class="row-content">
+      <select id="body-font" class="font-select">
+        <option value="Inter">Loading fonts...</option>
+      </select>
+    </div>
+  </div>
+  <div class="row" id="body-weights-row" style="display: none; margin-top: -6px; margin-bottom: 6px;">
+    <div class="row-label" style="font-size: 11px; color: #888;">Text Styles</div>
+    <div class="row-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; width: 100%;">
+        <div class="field-stack">
+          <span class="field-sublabel">Regular</span>
+          <select id="body-weight-reg" class="font-select style-select"></select>
+        </div>
+        <div class="field-stack">
+          <span class="field-sublabel">Medium</span>
+          <select id="body-weight-med" class="font-select style-select"></select>
+        </div>
+        <div class="field-stack">
+          <span class="field-sublabel">Bold</span>
+          <select id="body-weight-bold" class="font-select style-select"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="separator"></div>
+
+  <h3>System Colors</h3>
+  <div id="fixed-container">
+    <div class="row" data-role="primary">
+      <div class="row-label">Primary</div>
+      <div class="row-content">
+        <input type="text" value="primary" placeholder="primary" />
+        <div class="color-swatch" data-color="#6750A4" style="background-color: #6750a4"></div>
+      </div>
+    </div>
+    <div class="row" data-role="secondary">
+      <div class="row-label">Secondary</div>
+      <div class="row-content">
+        <input type="text" value="secondary" placeholder="secondary" />
+        <div class="color-swatch" data-color="#625B71" style="background-color: #625b71"></div>
+      </div>
+    </div>
+    <div class="row" data-role="tertiary">
+      <div class="row-label">Tertiary</div>
+      <div class="row-content">
+        <input type="text" value="tertiary" placeholder="tertiary" />
+        <div class="color-swatch" data-color="#7D5260" style="background-color: #7d5260"></div>
+      </div>
+    </div>
+    <div class="row" data-role="neutral">
+      <div class="row-label">Neutral</div>
+      <div class="row-content">
+        <input type="text" value="neutral" placeholder="neutral" />
+        <div class="color-swatch" data-color="#767680" style="background-color: #767680"></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" id="open-advanced-btn" class="secondary-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    Advanced Options
+  </button>
+
+  <button id="create" class="primary-btn">Generate System</button>
+
+  <!-- ADVANCED OPTIONS MODAL -->
+  <div id="advanced-modal">
+    <div class="advanced-content">
+      <div class="modal-header-row">
+        <span class="modal-title">Advanced Options</span>
+        <button type="button" id="close-advanced-btn" class="modal-close-btn" title="Close">✕</button>
+      </div>
+
+      <div class="row">
+        <div class="row-label">Base Font Size (Body Large)</div>
+        <div class="row-content">
+          <select id="base-font-size" class="font-select">
+            <option value="14">14 px (Small)</option>
+            <option value="16" selected>16 px (Default)</option>
+            <option value="18">18 px (Large)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label">Letter Spacing</div>
+        <div class="row-content">
+          <div class="twin-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Display</span>
+              <div class="input-with-unit">
+                <input type="number" id="ls-display" step="0.01" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Text</span>
+              <div class="input-with-unit">
+                <input type="number" id="ls-others" step="0.01" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label">Wrap Style</div>
+        <div class="row-content">
+          <div class="twin-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Display</span>
+              <select id="wrap-display" class="font-select style-select">
+                <option value="BALANCE" selected>Balance</option>
+                <option value="AUTO">Auto</option>
+                <option value="PRETTY">Pretty</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Default</span>
+              <select id="wrap-others" class="font-select style-select">
+                <option value="BALANCE" selected>Balance</option>
+                <option value="AUTO">Auto</option>
+                <option value="PRETTY">Pretty</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="display: none;">
+        <div class="row-label">Para. Spacing</div>
+        <div class="row-content">
+          <div class="twin-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Display</span>
+              <div class="input-with-unit">
+                <input type="number" id="ps-display" step="1" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Text</span>
+              <div class="input-with-unit">
+                <input type="number" id="ps-others" step="1" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="display: none;">
+        <div class="row-label">Para. Indent</div>
+        <div class="row-content">
+          <div class="twin-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Display</span>
+              <div class="input-with-unit">
+                <input type="number" id="pi-display" step="1" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Text</span>
+              <div class="input-with-unit">
+                <input type="number" id="pi-others" step="1" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label">Layout XL Margin</div>
+        <div class="row-content">
+          <div class="input-with-unit">
+            <input type="number" id="layout-margin-xl" min="32" max="200" value="72" />
+            <span class="unit-tag">px</span>
+          </div>
+        </div>
+        <div style="font-size: 10px; color: #777; margin-top: 4px; line-height: 1.4;">
+          Breakpoint XL margin (32px - 200px). Breakpoint LG is calculated proportionally. Breakpoints MD & SM are fixed at 32px and 16px.
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="modal-section-header">
+        <span style="font-weight: 600; font-size: 13px; color: #eee; text-transform: uppercase; letter-spacing: 0.5px;">Custom Gradients (8 Directions)</span>
+        <button type="button" id="add-gradient-btn" class="small-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Gradient
+        </button>
+      </div>
+      <div id="custom-gradients-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <button type="button" id="done-advanced-btn" class="primary-btn" style="margin-top: 18px; padding: 10px;">Save & Close</button>
+    </div>
+  </div>
+
+  <div id="picker-modal">
+    <div class="picker-content">
+      <div class="picker-header">Color Picker</div>
+      <div class="hex-row">
+        <span style="color: #aaa; font-size: 12px">HEX</span>
+        <input type="text" id="modal-hex" class="hex-input" value="#6750A4" />
+      </div>
+      <div class="slider-group">
+        <div class="label-row">
+          <span>Hue</span><span id="val-hue">270</span>
+        </div>
+        <input type="range" id="hue-slider" min="0" max="360" value="270" />
+      </div>
+      <div class="slider-group">
+        <div class="label-row">
+          <span>Saturation</span><span id="val-sat">50</span>
+        </div>
+        <input type="range" id="sat-slider" min="0" max="100" value="50" />
+      </div>
+      <div class="slider-group">
+        <div class="label-row">
+          <span>Lightness</span><span id="val-light">40</span>
+        </div>
+        <input type="range" id="light-slider" min="0" max="100" value="40" />
+      </div>
+      <div class="picker-actions">
+        <button class="picker-btn btn-cancel" id="btn-cancel">Cancel</button>
+        <button class="picker-btn btn-apply" id="btn-apply">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeSwatch = null;
+
+    function updateSwatchColor(swatch, hex) {
+      if (hex && hex !== "undefined") {
+        swatch.style.backgroundColor = hex;
+        swatch.dataset.color = hex;
+        if (swatch.dataset.role === 'custom-grad-stop') {
+          const row = swatch.closest('.stop-row');
+          if (row) {
+            const inp = row.querySelector('.stop-hex-input');
+            if (inp) inp.value = hex;
+          }
+          const card = swatch.closest('.gradient-card');
+          if (card && row) {
+            const cardIdx = parseInt(card.dataset.index, 10);
+            const sIdx = parseInt(row.dataset.stopIndex, 10);
+            if (customGradientsList[cardIdx] && customGradientsList[cardIdx].stops[sIdx]) {
+              customGradientsList[cardIdx].stops[sIdx].color = hex;
+            }
+            const previewBar = card.querySelector('.gradient-preview-bar');
+            if (previewBar && customGradientsList[cardIdx]) {
+              const gradStops = customGradientsList[cardIdx].stops;
+              previewBar.style.background = `linear-gradient(90deg, ${gradStops.map(s => `${s.color} ${s.position}%`).join(', ')})`;
+            }
+          }
+        }
+      }
+    }
+
+    const modal = document.getElementById("picker-modal");
+    const hexInput = document.getElementById("modal-hex");
+    const hSlider = document.getElementById("hue-slider");
+    const sSlider = document.getElementById("sat-slider");
+    const lSlider = document.getElementById("light-slider");
+
+    function openPicker(e) {
+      activeSwatch = e.target;
+      const hex = activeSwatch.dataset.color;
+      const [h, s, l] = hexToHSL(hex);
+      hSlider.value = h;
+      sSlider.value = s;
+      lSlider.value = l;
+      hexInput.value = hex;
+      updateLabels();
+      updateSliderBackgrounds();
+      modal.style.display = "flex";
+      setTimeout(() => {
+        hexInput.focus();
+        hexInput.select();
+      }, 50);
+    }
+
+    hexInput.addEventListener("focus", () => {
+      hexInput.select();
+    });
+
+    hexInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        let hex = hexInput.value.trim();
+        if (!hex.startsWith("#")) hex = "#" + hex;
+        if (/^#[0-9A-F]{6}$/i.test(hex)) {
+          hexInput.value = hex;
+        }
+        if (activeSwatch) updateSwatchColor(activeSwatch, hexInput.value);
+        modal.style.display = "none";
+      } else if (e.key === "Escape") {
+        modal.style.display = "none";
+      }
+    });
+
+    const advModal = document.getElementById("advanced-modal");
+    const openAdvBtn = document.getElementById("open-advanced-btn");
+    const closeAdvBtn = document.getElementById("close-advanced-btn");
+    const doneAdvBtn = document.getElementById("done-advanced-btn");
+
+    if (openAdvBtn) {
+      openAdvBtn.addEventListener("click", () => {
+        advModal.style.display = "flex";
+      });
+    }
+
+    const closeAdvModal = () => {
+      advModal.style.display = "none";
+    };
+
+    if (closeAdvBtn) closeAdvBtn.addEventListener("click", closeAdvModal);
+    if (doneAdvBtn) doneAdvBtn.addEventListener("click", closeAdvModal);
+
+    advModal.addEventListener("click", (e) => {
+      if (e.target === advModal) closeAdvModal();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (modal.style.display === "flex" && e.key === "Escape") {
+        modal.style.display = "none";
+      } else if (advModal.style.display === "flex" && e.key === "Escape") {
+        closeAdvModal();
+      }
+    });
+
+    // Custom Gradients Management
+    let customGradientsList = [];
+
+    function normalizeGradientStops(rawStops) {
+      if (!Array.isArray(rawStops) || rawStops.length === 0) {
+        return [
+          { color: '#6750A4', position: 0 },
+          { color: '#FF8008', position: 100 }
+        ];
+      }
+      return rawStops.map((s, idx) => {
+        if (typeof s === 'string') {
+          const pos = Math.round((idx / Math.max(1, rawStops.length - 1)) * 100);
+          return { color: s, position: pos };
+        }
+        return {
+          color: s.color || '#000000',
+          position: s.position !== undefined ? parseInt(s.position, 10) : Math.round((idx / Math.max(1, rawStops.length - 1)) * 100)
+        };
+      });
+    }
+
+    function createGradientCardElement(grad, index) {
+      grad.stops = normalizeGradientStops(grad.stops);
+      grad.mode = grad.mode || 'all-8';
+      grad.angle = grad.angle !== undefined ? grad.angle : 90;
+      grad.scale = grad.scale !== undefined ? grad.scale : 100;
+      grad.offsetX = grad.offsetX !== undefined ? grad.offsetX : 0;
+      grad.offsetY = grad.offsetY !== undefined ? grad.offsetY : 0;
+
+      const card = document.createElement('div');
+      card.className = 'gradient-card';
+      card.dataset.index = index;
+
+      const header = document.createElement('div');
+      header.className = 'gradient-card-header';
+      
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'gradient-name-input';
+      nameInput.placeholder = 'Gradient name (e.g. brand, hero)';
+      nameInput.value = grad.name || `custom-${index + 1}`;
+      nameInput.addEventListener('input', () => {
+        grad.name = nameInput.value.trim() || 'custom';
+      });
+
+      const delCardBtn = document.createElement('button');
+      delCardBtn.type = 'button';
+      delCardBtn.className = 'icon-btn-del';
+      delCardBtn.innerHTML = '✕';
+      delCardBtn.title = 'Remove this gradient';
+      delCardBtn.addEventListener('click', () => {
+        customGradientsList.splice(index, 1);
+        renderAllGradientCards();
+      });
+
+      header.appendChild(nameInput);
+      header.appendChild(delCardBtn);
+      card.appendChild(header);
+
+      // Controls Grid (Mode, Angle, Scale, Offset X, Offset Y)
+      const controlsGrid = document.createElement('div');
+      controlsGrid.className = 'grad-controls-grid';
+
+      const modeStack = document.createElement('div');
+      modeStack.className = 'grad-control-stack';
+      const modeLabel = document.createElement('span');
+      modeLabel.className = 'grad-control-label';
+      modeLabel.innerText = 'Mode';
+      const modeSelect = document.createElement('select');
+      modeSelect.className = 'grad-mode-select';
+      modeSelect.innerHTML = '<option value="all-8">All 8 Directions</option><option value="custom">Custom Angle</option>';
+      modeSelect.value = grad.mode;
+      modeStack.appendChild(modeLabel);
+      modeStack.appendChild(modeSelect);
+      controlsGrid.appendChild(modeStack);
+
+      function createInputStack(labelText, initialVal, min, max, unitText, onChange) {
+        const stack = document.createElement('div');
+        stack.className = 'grad-control-stack';
+        const label = document.createElement('span');
+        label.className = 'grad-control-label';
+        label.innerText = labelText;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'input-with-unit';
+        wrap.style.cssText = 'position: relative; width: 100%;';
+
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.className = 'grad-control-input';
+        inp.min = min.toString();
+        inp.max = max.toString();
+        inp.value = initialVal.toString();
+
+        const unit = document.createElement('span');
+        unit.className = 'unit-tag';
+        unit.style.cssText = 'right: 4px; font-size: 10px; pointer-events: none;';
+        unit.innerText = unitText;
+
+        const handleVal = () => {
+          let v = parseInt(inp.value, 10);
+          if (isNaN(v)) v = initialVal;
+          v = Math.max(min, Math.min(max, v));
+          onChange(v);
+        };
+        inp.addEventListener('input', handleVal);
+        inp.addEventListener('change', handleVal);
+
+        wrap.appendChild(inp);
+        wrap.appendChild(unit);
+        stack.appendChild(label);
+        stack.appendChild(wrap);
+        return { stack, inp };
+      }
+
+      const angleObj = createInputStack('Angle', grad.angle, 0, 360, '°', (v) => {
+        grad.angle = v;
+        updatePreview();
+      });
+
+      const scaleObj = createInputStack('Length', grad.scale, 10, 300, '%', (v) => {
+        grad.scale = v;
+        updatePreview();
+      });
+
+      const offsetXObj = createInputStack('Shift X', grad.offsetX, -100, 100, '%', (v) => {
+        grad.offsetX = v;
+        updatePreview();
+      });
+
+      const offsetYObj = createInputStack('Shift Y', grad.offsetY, -100, 100, '%', (v) => {
+        grad.offsetY = v;
+        updatePreview();
+      });
+
+      controlsGrid.appendChild(angleObj.stack);
+      controlsGrid.appendChild(scaleObj.stack);
+      controlsGrid.appendChild(offsetXObj.stack);
+      controlsGrid.appendChild(offsetYObj.stack);
+      card.appendChild(controlsGrid);
+
+      function toggleCustomControls() {
+        const isCustom = modeSelect.value === 'custom';
+        grad.mode = modeSelect.value;
+        angleObj.stack.style.display = isCustom ? 'flex' : 'none';
+        scaleObj.stack.style.display = isCustom ? 'flex' : 'none';
+        offsetXObj.stack.style.display = isCustom ? 'flex' : 'none';
+        offsetYObj.stack.style.display = isCustom ? 'flex' : 'none';
+        updatePreview();
+      }
+
+      modeSelect.addEventListener('change', toggleCustomControls);
+
+      const previewBar = document.createElement('div');
+      previewBar.className = 'gradient-preview-bar';
+      card.appendChild(previewBar);
+
+      const stopsList = document.createElement('div');
+      stopsList.className = 'stops-list';
+
+      function renderStops() {
+        stopsList.innerHTML = '';
+        const stops = grad.stops;
+
+        stops.forEach((stopObj, sIdx) => {
+          const row = document.createElement('div');
+          row.className = 'stop-row';
+          row.dataset.stopIndex = sIdx;
+
+          const label = document.createElement('span');
+          label.className = 'stop-label';
+          if (sIdx === 0) label.innerText = 'Start';
+          else if (sIdx === stops.length - 1) label.innerText = 'End';
+          else label.innerText = `Stop ${sIdx + 1}`;
+
+          const swatch = document.createElement('div');
+          swatch.className = 'stop-swatch';
+          swatch.dataset.color = stopObj.color;
+          swatch.dataset.role = 'custom-grad-stop';
+          swatch.style.backgroundColor = stopObj.color;
+          swatch.addEventListener('click', (e) => {
+            openPicker(e);
+          });
+
+          const hexInp = document.createElement('input');
+          hexInp.type = 'text';
+          hexInp.className = 'stop-hex-input';
+          hexInp.value = stopObj.color;
+          const onHexChange = () => {
+            let val = hexInp.value.trim();
+            if (!val.startsWith('#')) val = '#' + val;
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+              swatch.style.backgroundColor = val;
+              swatch.dataset.color = val;
+              stopObj.color = val;
+              updatePreview();
+            }
+          };
+          hexInp.addEventListener('input', onHexChange);
+          hexInp.addEventListener('change', onHexChange);
+
+          const percentWrap = document.createElement('div');
+          percentWrap.className = 'input-with-unit stop-percent-wrap';
+
+          const percentInp = document.createElement('input');
+          percentInp.type = 'number';
+          percentInp.className = 'stop-percent-input';
+          percentInp.min = '0';
+          percentInp.max = '100';
+          percentInp.value = stopObj.position !== undefined ? stopObj.position : (sIdx === 0 ? 0 : sIdx === stops.length - 1 ? 100 : 50);
+          
+          const onPercentChange = () => {
+            let pVal = parseInt(percentInp.value, 10);
+            if (isNaN(pVal)) pVal = 0;
+            pVal = Math.max(0, Math.min(100, pVal));
+            stopObj.position = pVal;
+            updatePreview();
+          };
+          percentInp.addEventListener('input', onPercentChange);
+          percentInp.addEventListener('change', onPercentChange);
+
+          const percentUnit = document.createElement('span');
+          percentUnit.className = 'unit-tag';
+          percentUnit.style.cssText = 'right: 4px; font-size: 10px; pointer-events: none;';
+          percentUnit.innerText = '%';
+
+          percentWrap.appendChild(percentInp);
+          percentWrap.appendChild(percentUnit);
+
+          row.appendChild(label);
+          row.appendChild(swatch);
+          row.appendChild(hexInp);
+          row.appendChild(percentWrap);
+
+          if (stops.length > 2 && sIdx > 0 && sIdx < stops.length - 1) {
+            const delStopBtn = document.createElement('button');
+            delStopBtn.type = 'button';
+            delStopBtn.className = 'icon-btn-del';
+            delStopBtn.innerHTML = '✕';
+            delStopBtn.title = 'Remove color stop';
+            delStopBtn.addEventListener('click', () => {
+              grad.stops.splice(sIdx, 1);
+              renderStops();
+            });
+            row.appendChild(delStopBtn);
+          }
+
+          stopsList.appendChild(row);
+        });
+
+        updatePreview();
+      }
+
+      function updatePreview() {
+        if (grad.stops && grad.stops.length >= 2) {
+          const stopsStr = grad.stops.map(s => `${s.color} ${s.position}%`).join(', ');
+          const ang = grad.mode === 'custom' ? (grad.angle !== undefined ? grad.angle : 90) : 90;
+          previewBar.style.background = `linear-gradient(${ang}deg, ${stopsStr})`;
+        }
+      }
+
+      toggleCustomControls();
+      card.appendChild(stopsList);
+
+      const addStopBtn = document.createElement('button');
+      addStopBtn.type = 'button';
+      addStopBtn.className = 'small-btn';
+      addStopBtn.style.marginTop = '4px';
+      addStopBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Color Stop';
+      addStopBtn.addEventListener('click', () => {
+        const prevPos = grad.stops[grad.stops.length - 2] ? grad.stops[grad.stops.length - 2].position : 0;
+        const lastPos = grad.stops[grad.stops.length - 1] ? grad.stops[grad.stops.length - 1].position : 100;
+        const midPos = Math.round((prevPos + lastPos) / 2);
+        const insertIdx = grad.stops.length - 1;
+        grad.stops.splice(insertIdx, 0, { color: '#D0BCFF', position: midPos });
+        renderStops();
+      });
+      card.appendChild(addStopBtn);
+
+      renderStops();
+      return card;
+    }
+
+    function renderAllGradientCards() {
+      const container = document.getElementById('custom-gradients-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (customGradientsList.length === 0) {
+        const emptyHint = document.createElement('div');
+        emptyHint.style.cssText = 'font-size: 11px; color: #777; font-style: italic; padding: 4px 0 10px 0;';
+        emptyHint.innerText = 'No custom gradients defined yet. Click "+ Add Gradient" to create one.';
+        container.appendChild(emptyHint);
+        return;
+      }
+
+      customGradientsList.forEach((grad, idx) => {
+        const cardEl = createGradientCardElement(grad, idx);
+        container.appendChild(cardEl);
+      });
+    }
+
+    const addGradBtn = document.getElementById('add-gradient-btn');
+    if (addGradBtn) {
+      addGradBtn.addEventListener('click', () => {
+        const newIdx = customGradientsList.length + 1;
+        customGradientsList.push({
+          name: `custom-${newIdx}`,
+          stops: [
+            { color: '#6750A4', position: 0 },
+            { color: '#FF8008', position: 100 }
+          ]
+        });
+        renderAllGradientCards();
+      });
+    }
+
+    document.getElementById("btn-cancel").onclick = () =>
+      (modal.style.display = "none");
+    document.getElementById("btn-apply").onclick = () => {
+      if (activeSwatch) updateSwatchColor(activeSwatch, hexInput.value);
+      modal.style.display = "none";
+    };
+
+    [hSlider, sSlider, lSlider].forEach((slider) => {
+      slider.oninput = () => {
+        const h = parseInt(hSlider.value),
+          s = parseInt(sSlider.value),
+          l = parseInt(lSlider.value);
+        hexInput.value = hslToHex(h, s, l);
+        updateLabels();
+        updateSliderBackgrounds();
+      };
+    });
+
+    hexInput.oninput = () => {
+      let hex = hexInput.value.trim();
+      if (!hex.startsWith("#")) hex = "#" + hex;
+      if (/^#[0-9A-F]{6}$/i.test(hex)) {
+        const [h, s, l] = hexToHSL(hex);
+        hSlider.value = h;
+        sSlider.value = s;
+        lSlider.value = l;
+        updateLabels();
+        updateSliderBackgrounds();
+      }
+    };
+
+    hexInput.onchange = () => {
+      let hex = hexInput.value.trim();
+      if (!hex.startsWith("#")) hex = "#" + hex;
+      if (/^#[0-9A-F]{6}$/i.test(hex)) {
+        const [h, s, l] = hexToHSL(hex);
+        hSlider.value = h;
+        sSlider.value = s;
+        lSlider.value = l;
+        updateLabels();
+        updateSliderBackgrounds();
+      }
+    };
+
+    function updateLabels() {
+      document.getElementById("val-hue").innerText = hSlider.value;
+      document.getElementById("val-sat").innerText = sSlider.value;
+      document.getElementById("val-light").innerText = lSlider.value;
+    }
+
+    function updateSliderBackgrounds() {
+      const h = hSlider.value,
+        s = sSlider.value,
+        l = lSlider.value;
+      const gray = hslToHex(h, 0, l),
+        fullColor = hslToHex(h, 100, l);
+      sSlider.style.background = `linear-gradient(to right, ${gray}, ${fullColor})`;
+      const pureColor = hslToHex(h, s, 50);
+      lSlider.style.background = `linear-gradient(to right, #000, ${pureColor}, #fff)`;
+    }
+
+    document
+      .querySelectorAll("#fixed-container .color-swatch")
+      .forEach((swatch) => {
+        swatch.addEventListener("click", openPicker);
+      });
+
+    function deriveDarkBaseColor(lightHex) {
+      if (!lightHex) return "#FF6669";
+      const [h, s, l] = hexToHSL(lightHex);
+      const hDark = (h + 10) % 360;
+      const sDark = s;
+      const lDark = Math.min(95, Math.max(0, Math.round(l + 25)));
+      return hslToHex(hDark, sDark, lDark);
+    }
+
+    document.getElementById("create").onclick = () => {
+      const actionColor = "#2979FF";
+      const successColor = "#27AE60";
+      const warningColor = "#F2C94C";
+      const errorColor = "#e7000b";
+
+      const allSeeds = {
+        accessibility: { name: "accessibility", color: "#ffed00" },
+        action: { name: "action", color: actionColor },
+        actionDark: { name: "actionDark", color: deriveDarkBaseColor(actionColor) },
+        success: { name: "success", color: successColor },
+        successDark: { name: "successDark", color: deriveDarkBaseColor(successColor) },
+        warning: { name: "warning", color: warningColor },
+        warningDark: { name: "warningDark", color: deriveDarkBaseColor(warningColor) },
+        error: { name: "error", color: errorColor },
+        errorDark: { name: "errorDark", color: deriveDarkBaseColor(errorColor) }
+      };
+
+      document.querySelectorAll("#fixed-container .row").forEach((row) => {
+        const role = row.dataset.role;
+        if (!role) return;
+
+        const nameInput = row.querySelector('input[type="text"]');
+        const swatch = row.querySelector(".color-swatch");
+        const customName = nameInput.value.trim() || role;
+
+        allSeeds[role] = {
+          name: customName,
+          color: swatch.dataset.color,
+        };
+      });
+
+      // Zbieramy presety i fonty
+      const radiusPreset = document.getElementById("radius-preset").value || 'default';
+      const spacingPreset = document.getElementById("spacing-preset").value || 'default';
+      const baseFontSize = parseInt(document.getElementById("base-font-size").value, 10) || 16;
+      const headersFont = document.getElementById("headers-font").value || 'Inter';
+      const bodyFont = document.getElementById("body-font").value || 'Inter';
+
+      const headersStyles = {
+        regular: document.getElementById("headers-weight-reg").value || 'Regular',
+        medium: document.getElementById("headers-weight-med").value || 'Medium',
+        bold: document.getElementById("headers-weight-bold").value || 'Bold'
+      };
+      const bodyStyles = {
+        regular: document.getElementById("body-weight-reg").value || 'Regular',
+        medium: document.getElementById("body-weight-med").value || 'Medium',
+        bold: document.getElementById("body-weight-bold").value || 'Bold'
+      };
+
+      const lsDisplay = parseFloat(document.getElementById("ls-display").value) || 0;
+      const lsOthers = parseFloat(document.getElementById("ls-others").value) || 0;
+      const psDisplay = parseFloat(document.getElementById("ps-display").value) || 0;
+      const psOthers = parseFloat(document.getElementById("ps-others").value) || 0;
+      const piDisplay = parseFloat(document.getElementById("pi-display").value) || 0;
+      const piOthers = parseFloat(document.getElementById("pi-others").value) || 0;
+      const wrapDisplay = document.getElementById("wrap-display").value || 'BALANCE';
+      const wrapOthers = document.getElementById("wrap-others").value || 'BALANCE';
+
+      let layoutMarginXl = parseInt(document.getElementById("layout-margin-xl").value, 10) || 72;
+      if (layoutMarginXl < 32) layoutMarginXl = 32;
+      if (layoutMarginXl > 200) layoutMarginXl = 200;
+
+      const customGradientsPayload = customGradientsList.map(cg => ({
+        name: (cg.name || 'custom').trim(),
+        mode: cg.mode || 'all-8',
+        angle: cg.angle !== undefined ? cg.angle : 90,
+        scale: cg.scale !== undefined ? cg.scale : 100,
+        offsetX: cg.offsetX !== undefined ? cg.offsetX : 0,
+        offsetY: cg.offsetY !== undefined ? cg.offsetY : 0,
+        stops: cg.stops && cg.stops.length >= 2 ? cg.stops : [{ color: '#6750A4', position: 0 }, { color: '#FF8008', position: 100 }]
+      })).filter(cg => cg.stops.length >= 2);
+
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "create-palette",
+            seeds: allSeeds,
+            radiusPreset,
+            spacingPreset,
+            baseFontSize,
+            headersFont: headersFont,
+            headersStyles: headersStyles,
+            bodyFont: bodyFont,
+            bodyStyles: bodyStyles,
+            lsDisplay, lsOthers,
+            psDisplay, psOthers,
+            piDisplay, piOthers,
+            wrapDisplay, wrapOthers,
+            layoutMarginXl,
+            customGradients: customGradientsPayload
+          },
+        },
+        "*",
+      );
+    };
+
+    let initialHeadersFont = "Inter";
+    let initialBodyFont = "Inter";
+    let allFontStylesMap = {};
+    let savedHeadersStyles = null;
+    let savedBodyStyles = null;
+
+    function findBestMatchingStyle(styles, target) {
+      if (!styles || styles.length === 0) return target;
+      const targetLower = target.toLowerCase();
+      
+      const exact = styles.find(s => s.toLowerCase() === targetLower);
+      if (exact) return exact;
+      
+      if (targetLower === 'regular') {
+        const regSynonyms = ['normal', 'roman', 'book', '400', 'text regular', 'plain'];
+        for (const syn of regSynonyms) {
+          const m = styles.find(s => s.toLowerCase() === syn);
+          if (m) return m;
+        }
+        const nonItalicReg = styles.find(s => !s.toLowerCase().includes('italic') && (s.toLowerCase().includes('regular') || s.toLowerCase().includes('normal')));
+        if (nonItalicReg) return nonItalicReg;
+        const nonItalic = styles.find(s => !s.toLowerCase().includes('italic'));
+        if (nonItalic) return nonItalic;
+        return styles[0];
+      }
+      
+      if (targetLower === 'medium') {
+        const medSynonyms = ['500', 'medium', 'semibold', 'semi bold', 'demi', 'demibold', 'demi bold'];
+        for (const syn of medSynonyms) {
+          const m = styles.find(s => s.toLowerCase() === syn);
+          if (m) return m;
+        }
+        const nonItalicMed = styles.find(s => !s.toLowerCase().includes('italic') && (s.toLowerCase().includes('medium') || s.toLowerCase().includes('semibold') || s.toLowerCase().includes('semi bold')));
+        if (nonItalicMed) return nonItalicMed;
+        return findBestMatchingStyle(styles, 'regular');
+      }
+      
+      if (targetLower === 'bold') {
+        const boldSynonyms = ['700', 'bold', 'black', 'heavy', 'extrabold', 'extra bold', '800', '900', 'semibold', 'semi bold'];
+        for (const syn of boldSynonyms) {
+          const m = styles.find(s => s.toLowerCase() === syn);
+          if (m) return m;
+        }
+        const nonItalicBold = styles.find(s => !s.toLowerCase().includes('italic') && (s.toLowerCase().includes('bold') || s.toLowerCase().includes('black') || s.toLowerCase().includes('heavy')));
+        if (nonItalicBold) return nonItalicBold;
+        return styles[styles.length - 1];
+      }
+      
+      return styles[0];
+    }
+
+    const STANDARD_STYLE_KEYS = new Set([
+      'thin', 'thinitalic', 'italicthin',
+      'extralight', 'extralightitalic', 'italicextralight',
+      'ultralight', 'ultralightitalic', 'italicultralight',
+      'light', 'lightitalic', 'italiclight',
+      'regular', 'regularitalic', 'italicregular', 'normal', 'normalitalic', 'italicnormal', 'italic',
+      'medium', 'mediumitalic', 'italicmedium',
+      'semibold', 'semibolditalic', 'italicsemibold',
+      'demibold', 'demibolditalic', 'italicdemibold',
+      'bold', 'bolditalic', 'italicbold',
+      'extrabold', 'extrabolditalic', 'italicextrabold',
+      'ultrabold', 'ultrabolditalic', 'italicultrabold',
+      'black', 'blackitalic', 'italicblack',
+      'heavy', 'heavyitalic', 'italicheavy'
+    ]);
+
+    function normalizeStyleName(style) {
+      return (style || '').toLowerCase().replace(/[\s\-_]/g, '');
+    }
+
+    function isNonStandardFont(styles) {
+      if (!styles || styles.length === 0) return false;
+
+      // 1. Każdy styl w foncie musi należeć do standardowego zbioru 9 wag (lub 18 z italicami)
+      const allStylesStandard = styles.every(s => STANDARD_STYLE_KEYS.has(normalizeStyleName(s)));
+      if (!allStylesStandard) {
+        return true; // Posiada niestandardowe odmiany (np. Condensed, Extended, Text, Book, Roman, etc.)
+      }
+
+      // 2. Musi posiadać 3 bazowe wagi wymagane przez system (Regular, Medium/SemiBold, Bold)
+      const hasRegular = styles.some(s => {
+        const k = normalizeStyleName(s);
+        return k === 'regular' || k === 'normal' || k === 'italic';
+      });
+      const hasMedium = styles.some(s => {
+        const k = normalizeStyleName(s);
+        return k === 'medium' || k === 'semibold' || k === 'demibold';
+      });
+      const hasBold = styles.some(s => {
+        const k = normalizeStyleName(s);
+        return k === 'bold' || k === 'extrabold' || k === 'black' || k === 'heavy';
+      });
+
+      if (hasRegular && hasMedium && hasBold) {
+        return false; // Standardowy font -> ukrywamy override
+      }
+
+      return true; // Brakuje kluczowych wag -> pokazujemy override
+    }
+
+    function updateFontStylesUI(type, family, overrideStyles) {
+      const styles = allFontStylesMap[family] || ['Regular', 'Medium', 'Bold'];
+      const row = document.getElementById(`${type}-weights-row`);
+      const regSel = document.getElementById(`${type}-weight-reg`);
+      const medSel = document.getElementById(`${type}-weight-med`);
+      const boldSel = document.getElementById(`${type}-weight-bold`);
+
+      const optionsHtml = styles.map(s => `<option value="${s}">${s}</option>`).join('');
+      regSel.innerHTML = optionsHtml;
+      medSel.innerHTML = optionsHtml;
+      boldSel.innerHTML = optionsHtml;
+
+      const regVal = (overrideStyles && overrideStyles.regular && styles.includes(overrideStyles.regular)) 
+        ? overrideStyles.regular 
+        : findBestMatchingStyle(styles, 'regular');
+      const medVal = (overrideStyles && overrideStyles.medium && styles.includes(overrideStyles.medium)) 
+        ? overrideStyles.medium 
+        : findBestMatchingStyle(styles, 'medium');
+      const boldVal = (overrideStyles && overrideStyles.bold && styles.includes(overrideStyles.bold)) 
+        ? overrideStyles.bold 
+        : findBestMatchingStyle(styles, 'bold');
+
+      regSel.value = regVal;
+      medSel.value = medVal;
+      boldSel.value = boldVal;
+
+      if (isNonStandardFont(styles)) {
+        row.style.display = 'flex';
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    document.getElementById("headers-font").addEventListener("change", (e) => {
+      updateFontStylesUI('headers', e.target.value);
+    });
+    document.getElementById("body-font").addEventListener("change", (e) => {
+      updateFontStylesUI('body', e.target.value);
+    });
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === "fonts-loaded") {
+        allFontStylesMap = msg.fontStyles || {};
+        const fontList = msg.fonts;
+        const headersSelect = document.getElementById("headers-font");
+        const bodySelect = document.getElementById("body-font");
+
+        headersSelect.innerHTML = "";
+        bodySelect.innerHTML = "";
+
+        fontList.forEach((font) => {
+          const opt1 = document.createElement("option");
+          opt1.value = font;
+          opt1.innerText = font;
+          headersSelect.appendChild(opt1);
+
+          const opt2 = document.createElement("option");
+          opt2.value = font;
+          opt2.innerText = font;
+          bodySelect.appendChild(opt2);
+        });
+
+        headersSelect.value = initialHeadersFont;
+        bodySelect.value = initialBodyFont;
+
+        updateFontStylesUI('headers', headersSelect.value, savedHeadersStyles);
+        updateFontStylesUI('body', bodySelect.value, savedBodyStyles);
+      }
+      else if (msg.type === "load-settings") {
+        const savedSeeds = msg.seeds;
+        if (msg.fontStyles) allFontStylesMap = msg.fontStyles;
+
+        if (msg.headersStyles) savedHeadersStyles = msg.headersStyles;
+        if (msg.bodyStyles) savedBodyStyles = msg.bodyStyles;
+
+        if (msg.headersFont) {
+          initialHeadersFont = msg.headersFont;
+          const headersSelect = document.getElementById("headers-font");
+          if (headersSelect && Array.from(headersSelect.options).some(opt => opt.value === msg.headersFont)) {
+            headersSelect.value = msg.headersFont;
+          }
+        }
+        if (msg.bodyFont) {
+          initialBodyFont = msg.bodyFont;
+          const bodySelect = document.getElementById("body-font");
+          if (bodySelect && Array.from(bodySelect.options).some(opt => opt.value === msg.bodyFont)) {
+            bodySelect.value = msg.bodyFont;
+          }
+        }
+
+        updateFontStylesUI('headers', document.getElementById("headers-font").value, savedHeadersStyles);
+        updateFontStylesUI('body', document.getElementById("body-font").value, savedBodyStyles);
+
+        if (msg.radiusPreset) document.getElementById("radius-preset").value = msg.radiusPreset;
+        if (msg.spacingPreset) document.getElementById("spacing-preset").value = msg.spacingPreset;
+        if (msg.baseFontSize) document.getElementById("base-font-size").value = msg.baseFontSize;
+
+        if (msg.lsDisplay !== undefined) document.getElementById("ls-display").value = msg.lsDisplay;
+        if (msg.lsOthers !== undefined) document.getElementById("ls-others").value = msg.lsOthers;
+        if (msg.psDisplay !== undefined) document.getElementById("ps-display").value = msg.psDisplay;
+        if (msg.psOthers !== undefined) document.getElementById("ps-others").value = msg.psOthers;
+
+        if (msg.piDisplay !== undefined) document.getElementById("pi-display").value = msg.piDisplay;
+        if (msg.piOthers !== undefined) document.getElementById("pi-others").value = msg.piOthers;
+
+        if (msg.wrapDisplay !== undefined) document.getElementById("wrap-display").value = msg.wrapDisplay;
+        if (msg.wrapOthers !== undefined) document.getElementById("wrap-others").value = msg.wrapOthers;
+
+        if (msg.layoutMarginXl !== undefined) document.getElementById("layout-margin-xl").value = msg.layoutMarginXl;
+
+        if (msg.customGradients && Array.isArray(msg.customGradients)) {
+          customGradientsList = msg.customGradients;
+        } else {
+          customGradientsList = [];
+        }
+        renderAllGradientCards();
+
+        for (const [role, data] of Object.entries(savedSeeds)) {
+          const row = document.querySelector(`#fixed-container .row[data-role="${role}"]`);
+          if (row) {
+            const nameInput = row.querySelector('input[type="text"]');
+            const swatch = row.querySelector(".color-swatch");
+
+            let colorHex = swatch.dataset.color;
+            let colorName = role;
+
+            if (typeof data === "string") {
+              colorHex = data;
+            } else if (data && typeof data === "object") {
+              colorHex = data.color || colorHex;
+              colorName = data.name || role;
+            }
+
+            nameInput.value = colorName;
+            updateSwatchColor(swatch, colorHex);
+          }
+        }
+      }
+    };
+
+    function hslToHex(h, s, l) {
+      l /= 100;
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = (n) => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color)
+          .toString(16)
+          .padStart(2, "0");
+      };
+      return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+    }
+    function hexToHSL(H) {
+      let r = 0,
+        g = 0,
+        b = 0;
+      if (H.length == 4) {
+        r = "0x" + H[1] + H[1];
+        g = "0x" + H[2] + H[2];
+        b = "0x" + H[3] + H[3];
+      } else if (H.length == 7) {
+        r = "0x" + H[1] + H[2];
+        g = "0x" + H[3] + H[4];
+        b = "0x" + H[5] + H[6];
+      }
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      let cmin = Math.min(r, g, b),
+        cmax = Math.max(r, g, b),
+        delta = cmax - cmin;
+      let h = 0,
+        s = 0,
+        l = 0;
+      if (delta == 0) h = 0;
+      else if (cmax == r) h = ((g - b) / delta) % 6;
+      else if (cmax == g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+      l = (cmax + cmin) / 2;
+      s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+      s = +(s * 100).toFixed(1);
+      l = +(l * 100).toFixed(1);
+      return [Math.round(h), Math.round(s), Math.round(l)];
+    }
+
+    // Auto-resize plugin window to match content height
+    const resizeObserver = new ResizeObserver((entries) => {
+      const height = Math.ceil(document.documentElement.scrollHeight || document.body.scrollHeight);
+      parent.postMessage({ pluginMessage: { type: 'resize', height: height } }, '*');
+    });
+    resizeObserver.observe(document.body);
+  </script>
+</body>
+
+</html>
