@@ -1214,6 +1214,16 @@ figma.ui.onmessage = async (msg) => {
         { name: "onSurfaceDark", oldName: ["onSurfaceDark", "onSurfaceStaticDark"], light: "neutral/90", lightContrast: "neutral/98", dark: "neutral/90", darkContrast: "neutral/98", accessibility: "neutral/100" },
         { name: "surfaceBright", oldName: ["surfaceLow", "surfaceMax", "layerLow", "layerLower", "layerMax", "canvasMax"], light: "neutral/100", lightContrast: "neutral/100", dark: "neutral/100", darkContrast: "neutral/100", accessibility: "neutral/100" },
         { name: "onSurfaceBright", light: "neutral/10", lightContrast: "neutral/5", dark: "neutral/10", darkContrast: "neutral/5", accessibility: "neutral/5" },
+
+        // 8. Layer Elevation Scale (canvas -> surface -> layer scale)
+        { name: "layerLowest", oldName: ["surfaceLowest", "canvasSunken"], light: "neutral/100", lightContrast: "neutral/100", dark: "neutral/5", darkContrast: "neutral/0", accessibility: "neutral/0" },
+        { name: "layerLower", oldName: ["surfaceLower"], light: "neutral/98", lightContrast: "neutral/95", dark: "neutral/10", darkContrast: "neutral/5", accessibility: "neutral/5" },
+        { name: "layerLow", oldName: ["surfaceLow", "surfaceBase", "canvasDefault"], light: "neutral/95", lightContrast: "neutral/90", dark: "neutral/25", darkContrast: "neutral/30", accessibility: "neutral/30" },
+        { name: "layerBase", oldName: ["surfaceBase", "surfaceHigh", "canvasSubtle"], light: "neutral/90", lightContrast: "neutral/80", dark: "neutral/25", darkContrast: "neutral/25", accessibility: "neutral/25" },
+        { name: "layerHigh", oldName: ["surfaceHigh", "surfaceHigher", "canvasSurface"], light: "neutral/80", lightContrast: "neutral/70", dark: "neutral/25", darkContrast: "neutral/20", accessibility: "neutral/20" },
+        { name: "layerHigher", oldName: ["surfaceHigher", "surfaceHighest", "canvasRaised"], light: "neutral/75", lightContrast: "neutral/65", dark: "neutral/20", darkContrast: "neutral/15", accessibility: "neutral/15" },
+        { name: "layerHighest", oldName: ["surfaceHighest", "canvasOverlay"], light: "neutral/70", lightContrast: "neutral/60", dark: "neutral/15", darkContrast: "neutral/10", accessibility: "neutral/10" },
+        { name: "layerMax", oldName: ["surfaceMax"], light: "neutral/65", lightContrast: "neutral/55", dark: "neutral/10", darkContrast: "neutral/5", accessibility: "neutral/5" },
         //outline
         { name: "outlineLowest", light: "neutral/100", lightContrast: "neutral/100", dark: "neutral/5", darkContrast: "neutral/0", accessibility: "accessibility/60" },
         { name: "outlineLower", light: "neutral/80", lightContrast: "neutral/55", dark: "neutral/45", darkContrast: "neutral/75", accessibility: "accessibility/60" },
