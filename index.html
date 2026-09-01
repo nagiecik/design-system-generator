@@ -479,112 +479,392 @@
       background: #2a2a2a;
     }
 
+    /* --- MODERN FIGMA COLOR PICKER MODAL --- */
+    #picker-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
     .picker-content {
       background: #1e1e1e;
-      color: white;
-      padding: 24px;
-      border-radius: 16px;
-      width: 280px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      border: 1px solid #333;
+      color: #fff;
+      padding: 14px 16px 14px 16px;
+      border-radius: 12px;
+      width: 300px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
+      border: 1px solid #333333;
+      box-sizing: border-box;
+      user-select: none;
     }
 
-    .picker-header {
-      text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #eee;
-    }
-
-    .hex-row {
+    .picker-top-bar {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .hex-input {
-      background: #2c2c2c;
-      border: 1px solid #444;
-      color: white;
-      padding: 8px;
-      border-radius: 6px;
-      width: 100px;
-      text-align: center;
-      font-family: monospace;
-      letter-spacing: 1px;
-    }
-
-    .slider-group {
-      margin-bottom: 18px;
-    }
-
-    .label-row {
-      display: flex;
       justify-content: space-between;
-      font-size: 12px;
-      color: #aaa;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
-    input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
+    .picker-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #eee;
+      letter-spacing: -0.2px;
+    }
+
+    .picker-close-btn {
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .picker-close-btn:hover {
+      color: #fff;
+      background: #2a2a2a;
+    }
+
+    /* 2D Saturation-Value Canvas / Box */
+    .picker-sat-val-wrap {
       width: 100%;
-      height: 4px;
-      border-radius: 2px;
+      height: 180px;
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: crosshair;
+      margin-bottom: 12px;
+      touch-action: none;
+      box-shadow: inset 0 0 1px rgba(0,0,0,0.5);
+    }
+
+    .picker-sat-val-box {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: #ff0000;
+      background-image: 
+        linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0)),
+        linear-gradient(to top, #000000, rgba(0, 0, 0, 0));
+    }
+
+    .picker-sat-val-thumb {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.9), inset 0 0 2px rgba(0, 0, 0, 0.6);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      top: 0;
+      left: 0;
+      box-sizing: border-box;
+    }
+
+    /* Sliders Stack (Hue + Alpha) */
+    .picker-sliders-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .picker-eyedropper-btn {
+      background: #282828;
+      border: 1px solid #383838;
+      color: #aaa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .picker-eyedropper-btn:hover {
+      background: #333333;
+      color: #fff;
+      border-color: #484848;
+    }
+
+    .picker-sliders-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .picker-slider-track {
+      height: 12px;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .hue-track {
+      background: linear-gradient(to right,
+        #ff0000 0%,
+        #ffff00 17%,
+        #00ff00 33%,
+        #00ffff 50%,
+        #0000ff 67%,
+        #ff00ff 83%,
+        #ff0000 100%);
+    }
+
+    .alpha-track {
+      background-color: #222;
+      background-image: 
+        linear-gradient(45deg, #444 25%, transparent 25%), 
+        linear-gradient(-45deg, #444 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #444 75%), 
+        linear-gradient(-45deg, transparent 75%, #444 75%);
+      background-size: 8px 8px;
+      background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+      overflow: hidden;
+    }
+
+    .picker-alpha-gradient {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(to right, transparent, #ff0000);
+      pointer-events: none;
+    }
+
+    .picker-slider-thumb {
+      position: absolute;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+      background: transparent;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      left: 0%;
+      box-sizing: border-box;
+    }
+
+    /* Format selector & inputs row */
+    .picker-inputs-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .picker-format-dropdown-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .picker-format-btn {
+      background: #2a2a2a;
+      border: 1px solid #383838;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 28px;
+      box-sizing: border-box;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .picker-format-btn:hover {
+      background: #333;
+      border-color: #484848;
+    }
+
+    .picker-format-menu {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 0;
+      background: #1e1e1e;
+      border: 1px solid #383838;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      padding: 4px 0;
+      min-width: 90px;
+      z-index: 300;
+    }
+
+    .picker-format-menu.open {
+      display: block;
+    }
+
+    .format-option {
+      padding: 6px 14px 6px 24px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #ccc;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      position: relative;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .format-option:hover {
+      background: #2c2c2c;
+      color: #fff;
+    }
+
+    .format-option.active {
+      background: #0d99ff;
+      color: #ffffff;
+    }
+
+    .format-option .check-icon {
+      position: absolute;
+      left: 8px;
+      font-size: 10px;
+      display: none;
+    }
+
+    .format-option.active .check-icon {
+      display: block;
+    }
+
+    .picker-fields-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .picker-num-input, .picker-text-input {
+      background: #2a2a2a;
+      border: 1px solid #383838;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: 6px;
+      text-align: center;
+      height: 28px;
+      box-sizing: border-box;
       outline: none;
+      min-width: 0;
+      flex: 1;
+      font-family: inherit;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+
+    .picker-num-input::-webkit-outer-spin-button,
+    .picker-num-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
       margin: 0;
     }
 
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: white;
-      cursor: pointer;
-      border: 2px solid #1e1e1e;
-      box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    .picker-num-input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
     }
 
-    #hue-slider {
-      background: linear-gradient(to right,
-          #f00,
-          #ff0,
-          #0f0,
-          #0ff,
-          #00f,
-          #f0f,
-          #f00);
+    .picker-num-input:focus, .picker-text-input:focus {
+      border-color: #0d99ff;
+      background: #333;
     }
 
-    .picker-actions {
+    .picker-text-input.hex-field {
+      text-align: center;
+      font-family: monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Footer with Preview + Actions */
+    .picker-footer-row {
       display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 24px;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid #2d2d2d;
+    }
+
+    .picker-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .picker-preview-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid #444;
+      background-color: #6750A4;
+      box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .picker-preview-hex {
+      font-size: 11px;
+      font-family: monospace;
+      color: #aaa;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .picker-actions-btns {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .picker-btn {
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      border: none;
-    }
-
-    .btn-cancel {
-      background: transparent;
-      color: #aaa;
-    }
-
-    .btn-apply {
-      background: #d0bcff;
-      color: #381e72;
+      font-size: 12px;
       font-weight: 600;
+      border: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .picker-btn.btn-cancel {
+      background: #2a2a2a;
+      color: #aaa;
+      border: 1px solid #383838;
+    }
+
+    .picker-btn.btn-cancel:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .picker-btn.btn-apply {
+      background: #0d99ff;
+      color: #fff;
+    }
+
+    .picker-btn.btn-apply:hover {
+      background: #0082e6;
     }
   </style>
 </head>
@@ -854,32 +1134,79 @@
 
   <div id="picker-modal">
     <div class="picker-content">
-      <div class="picker-header">Color Picker</div>
-      <div class="hex-row">
-        <span style="color: #aaa; font-size: 12px">HEX</span>
-        <input type="text" id="modal-hex" class="hex-input" value="#6750A4" />
+      <!-- Header with Title and Close -->
+      <div class="picker-top-bar">
+        <span class="picker-title">Color Picker</span>
+        <button type="button" class="picker-close-btn" id="btn-picker-close" title="Close">✕</button>
       </div>
-      <div class="slider-group">
-        <div class="label-row">
-          <span>Hue</span><span id="val-hue">270</span>
+
+      <!-- 2D Saturation-Value Canvas / Box -->
+      <div class="picker-sat-val-wrap">
+        <div class="picker-sat-val-box" id="picker-sat-val-box">
+          <div class="picker-sat-val-thumb" id="picker-sat-val-thumb"></div>
         </div>
-        <input type="range" id="hue-slider" min="0" max="360" value="270" />
       </div>
-      <div class="slider-group">
-        <div class="label-row">
-          <span>Saturation</span><span id="val-sat">50</span>
+
+      <!-- Sliders Row (Eyedropper + Hue & Alpha Sliders) -->
+      <div class="picker-sliders-row">
+        <button type="button" class="picker-eyedropper-btn" id="picker-eyedropper-btn" title="Pick color from screen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 11l-8-8-8.5 8.5a2.12 2.12 0 0 0 0 3l2.5 2.5a2.12 2.12 0 0 0 3 0L16.5 8.5"/>
+            <path d="M5 19l-3 3"/>
+            <path d="M14 6l4 4"/>
+          </svg>
+        </button>
+
+        <div class="picker-sliders-stack">
+          <!-- Hue Slider Track -->
+          <div class="picker-slider-track hue-track" id="picker-hue-track">
+            <div class="picker-slider-thumb" id="picker-hue-thumb"></div>
+          </div>
+
+          <!-- Alpha Slider Track -->
+          <div class="picker-slider-track alpha-track" id="picker-alpha-track">
+            <div class="picker-alpha-gradient" id="picker-alpha-gradient"></div>
+            <div class="picker-slider-thumb" id="picker-alpha-thumb"></div>
+          </div>
         </div>
-        <input type="range" id="sat-slider" min="0" max="100" value="50" />
       </div>
-      <div class="slider-group">
-        <div class="label-row">
-          <span>Lightness</span><span id="val-light">40</span>
+
+      <!-- Format selector & inputs row -->
+      <div class="picker-inputs-row">
+        <!-- Format Dropdown Trigger -->
+        <div class="picker-format-dropdown-wrap">
+          <button type="button" class="picker-format-btn" id="picker-format-btn">
+            <span id="picker-format-label">HSL</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          
+          <!-- Dropdown Options Popup Menu -->
+          <div class="picker-format-menu" id="picker-format-menu">
+            <div class="format-option" data-format="hex">Hex</div>
+            <div class="format-option" data-format="rgb">RGB</div>
+            <div class="format-option" data-format="css">CSS</div>
+            <div class="format-option active" data-format="hsl">
+              <span class="check-icon">✓</span>
+              <span>HSL</span>
+            </div>
+            <div class="format-option" data-format="hsb">HSB</div>
+          </div>
         </div>
-        <input type="range" id="light-slider" min="0" max="100" value="40" />
+
+        <!-- Dynamic Inputs Container -->
+        <div class="picker-fields-container" id="picker-fields-container"></div>
       </div>
-      <div class="picker-actions">
-        <button class="picker-btn btn-cancel" id="btn-cancel">Cancel</button>
-        <button class="picker-btn btn-apply" id="btn-apply">Apply</button>
+
+      <!-- Footer Actions Row (Preview + Cancel & OK) -->
+      <div class="picker-footer-row">
+        <div class="picker-preview-wrap">
+          <div class="picker-preview-swatch" id="picker-preview-swatch"></div>
+          <span class="picker-preview-hex" id="picker-preview-hex">#6750A4</span>
+        </div>
+        <div class="picker-actions-btns">
+          <button type="button" class="picker-btn btn-cancel" id="btn-picker-cancel">Cancel</button>
+          <button type="button" class="picker-btn btn-apply" id="btn-picker-apply">OK</button>
+        </div>
       </div>
     </div>
   </div>
@@ -913,47 +1240,6 @@
         }
       }
     }
-
-    const modal = document.getElementById("picker-modal");
-    const hexInput = document.getElementById("modal-hex");
-    const hSlider = document.getElementById("hue-slider");
-    const sSlider = document.getElementById("sat-slider");
-    const lSlider = document.getElementById("light-slider");
-
-    function openPicker(e) {
-      activeSwatch = e.target;
-      const hex = activeSwatch.dataset.color;
-      const [h, s, l] = hexToHSL(hex);
-      hSlider.value = h;
-      sSlider.value = s;
-      lSlider.value = l;
-      hexInput.value = hex;
-      updateLabels();
-      updateSliderBackgrounds();
-      modal.style.display = "flex";
-      setTimeout(() => {
-        hexInput.focus();
-        hexInput.select();
-      }, 50);
-    }
-
-    hexInput.addEventListener("focus", () => {
-      hexInput.select();
-    });
-
-    hexInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        let hex = hexInput.value.trim();
-        if (!hex.startsWith("#")) hex = "#" + hex;
-        if (/^#[0-9A-F]{6}$/i.test(hex)) {
-          hexInput.value = hex;
-        }
-        if (activeSwatch) updateSwatchColor(activeSwatch, hexInput.value);
-        modal.style.display = "none";
-      } else if (e.key === "Escape") {
-        modal.style.display = "none";
-      }
-    });
 
     const advModal = document.getElementById("advanced-modal");
     const openAdvBtn = document.getElementById("open-advanced-btn");
@@ -1303,66 +1589,534 @@
       });
     }
 
-    document.getElementById("btn-cancel").onclick = () =>
-      (modal.style.display = "none");
-    document.getElementById("btn-apply").onclick = () => {
-      if (activeSwatch) updateSwatchColor(activeSwatch, hexInput.value);
-      modal.style.display = "none";
-    };
+    // ==========================================
+    // MODERN FIGMA COLOR PICKER SYSTEM
+    // ==========================================
+    let pickerColor = { h: 208, s: 0.07, v: 0.42, a: 1 };
+    let pickerFormat = 'hsl'; // 'hex' | 'rgb' | 'css' | 'hsl' | 'hsb'
+    let isDraggingSatVal = false;
+    let isDraggingHue = false;
+    let isDraggingAlpha = false;
 
-    [hSlider, sSlider, lSlider].forEach((slider) => {
-      slider.oninput = () => {
-        const h = parseInt(hSlider.value),
-          s = parseInt(sSlider.value),
-          l = parseInt(lSlider.value);
-        hexInput.value = hslToHex(h, s, l);
-        updateLabels();
-        updateSliderBackgrounds();
+    const pickerModal = document.getElementById("picker-modal");
+    const pickerSatValBox = document.getElementById("picker-sat-val-box");
+    const pickerSatValThumb = document.getElementById("picker-sat-val-thumb");
+    const pickerHueTrack = document.getElementById("picker-hue-track");
+    const pickerHueThumb = document.getElementById("picker-hue-thumb");
+    const pickerAlphaTrack = document.getElementById("picker-alpha-track");
+    const pickerAlphaGradient = document.getElementById("picker-alpha-gradient");
+    const pickerAlphaThumb = document.getElementById("picker-alpha-thumb");
+    const pickerFormatBtn = document.getElementById("picker-format-btn");
+    const pickerFormatLabel = document.getElementById("picker-format-label");
+    const pickerFormatMenu = document.getElementById("picker-format-menu");
+    const pickerFieldsContainer = document.getElementById("picker-fields-container");
+    const pickerCloseBtn = document.getElementById("btn-picker-close");
+    const pickerEyedropperBtn = document.getElementById("picker-eyedropper-btn");
+
+    const pickerCancelBtn = document.getElementById("btn-picker-cancel");
+    const pickerApplyBtn = document.getElementById("btn-picker-apply");
+    const pickerPreviewSwatch = document.getElementById("picker-preview-swatch");
+    const pickerPreviewHex = document.getElementById("picker-preview-hex");
+
+    if (window.EyeDropper) {
+      pickerEyedropperBtn.style.display = 'flex';
+      pickerEyedropperBtn.onclick = async () => {
+        try {
+          const dropper = new EyeDropper();
+          const result = await dropper.open();
+          if (result && result.sRGBHex) {
+            setColorFromHex(result.sRGBHex, pickerColor.a);
+          }
+        } catch (err) {}
       };
+    } else {
+      pickerEyedropperBtn.style.display = 'none';
+    }
+
+    function hsvToRgb(h, s, v) {
+      const c = v * s;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = v - c;
+      let r = 0, g = 0, b = 0;
+      if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+      else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+      else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+      else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+      else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      return {
+        r: Math.round((r + m) * 255),
+        g: Math.round((g + m) * 255),
+        b: Math.round((b + m) * 255)
+      };
+    }
+
+    function rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const d = max - min;
+      let h = 0;
+      const s = max === 0 ? 0 : d / max;
+      const v = max;
+      if (max !== min) {
+        if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h = h * 60;
+      }
+      return { h: Math.round(h < 0 ? h + 360 : (h >= 360 ? 0 : h)), s: s, v: v };
+    }
+
+    function hsvToHsl(h, s_hsv, v) {
+      const l = v * (1 - s_hsv / 2);
+      const s_hsl = l === 0 || l === 1 ? 0 : (v - l) / Math.min(l, 1 - l);
+      return { h: h, s: Math.max(0, Math.min(1, s_hsl)), l: Math.max(0, Math.min(1, l)) };
+    }
+
+    function hslToHsv(h, s_hsl, l) {
+      const v = l + s_hsl * Math.min(l, 1 - l);
+      const s_hsv = v === 0 ? 0 : 2 * (1 - l / v);
+      return { h: h, s: Math.max(0, Math.min(1, s_hsv)), v: Math.max(0, Math.min(1, v)) };
+    }
+
+    function rgbToHex(r, g, b) {
+      const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    }
+
+    function parseColorToHsv(colorStr) {
+      if (!colorStr) return { h: 0, s: 0, v: 0, a: 1 };
+      colorStr = colorStr.trim();
+
+      if (colorStr.startsWith('#') || /^[0-9A-F]{3,8}$/i.test(colorStr)) {
+        let hex = colorStr.startsWith('#') ? colorStr.slice(1) : colorStr;
+        let a = 1;
+        if (hex.length === 3) {
+          hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        } else if (hex.length === 4) {
+          a = parseInt(hex[3] + hex[3], 16) / 255;
+          hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        } else if (hex.length === 8) {
+          a = parseInt(hex.slice(6, 8), 16) / 255;
+          hex = hex.slice(0, 6);
+        }
+        const num = parseInt(hex, 16);
+        if (!isNaN(num)) {
+          const r = (num >> 16) & 255;
+          const g = (num >> 8) & 255;
+          const b = num & 255;
+          const hsv = rgbToHsv(r, g, b);
+          return { h: hsv.h, s: hsv.s, v: hsv.v, a: a };
+        }
+      }
+
+      const rgbMatch = colorStr.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/i);
+      if (rgbMatch) {
+        const r = parseInt(rgbMatch[1], 10);
+        const g = parseInt(rgbMatch[2], 10);
+        const b = parseInt(rgbMatch[3], 10);
+        const a = rgbMatch[4] !== undefined ? parseFloat(rgbMatch[4]) : 1;
+        const hsv = rgbToHsv(r, g, b);
+        return { h: hsv.h, s: hsv.s, v: hsv.v, a: isNaN(a) ? 1 : a };
+      }
+
+      const hslMatch = colorStr.match(/hsla?\s*\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?(?:\s*,\s*([\d.]+))?\s*\)/i);
+      if (hslMatch) {
+        const h = parseFloat(hslMatch[1]);
+        const s = parseFloat(hslMatch[2]) / 100;
+        const l = parseFloat(hslMatch[3]) / 100;
+        const a = hslMatch[4] !== undefined ? parseFloat(hslMatch[4]) : 1;
+        const hsv = hslToHsv(h, s, l);
+        return { h: hsv.h, s: hsv.s, v: hsv.v, a: isNaN(a) ? 1 : a };
+      }
+
+      return { h: 0, s: 0, v: 0, a: 1 };
+    }
+
+    function setColorFromHex(hex, alpha = 1) {
+      const parsed = parseColorToHsv(hex);
+      pickerColor.h = parsed.h;
+      pickerColor.s = parsed.s;
+      pickerColor.v = parsed.v;
+      pickerColor.a = alpha !== undefined ? alpha : parsed.a;
+      renderPickerUI();
+    }
+
+    function renderPickerUI(skipFields = false) {
+      const { h, s, v, a } = pickerColor;
+      const { r, g, b } = hsvToRgb(h, s, v);
+      const hex = rgbToHex(r, g, b);
+
+      // 1. 2D Canvas Sat-Val
+      pickerSatValBox.style.backgroundColor = `hsl(${h}, 100%, 50%)`;
+      pickerSatValThumb.style.left = `${Math.max(0, Math.min(100, s * 100))}%`;
+      pickerSatValThumb.style.top = `${Math.max(0, Math.min(100, (1 - v) * 100))}%`;
+
+      // 2. Hue slider
+      pickerHueThumb.style.left = `${Math.max(0, Math.min(100, (h / 360) * 100))}%`;
+
+      // 3. Alpha slider
+      pickerAlphaGradient.style.background = `linear-gradient(to right, transparent, rgb(${r}, ${g}, ${b}))`;
+      pickerAlphaThumb.style.left = `${Math.max(0, Math.min(100, a * 100))}%`;
+
+      // 4. Inputs
+      if (!skipFields) {
+        renderFormatFields();
+      }
+
+      // 5. Update local preview inside picker modal (without modifying activeSwatch until OK is clicked)
+      if (pickerPreviewSwatch) {
+        pickerPreviewSwatch.style.backgroundColor = hex;
+      }
+      if (pickerPreviewHex) {
+        pickerPreviewHex.innerText = hex;
+      }
+    }
+
+    function renderFormatFields() {
+      const { h, s, v, a } = pickerColor;
+      const { r, g, b } = hsvToRgb(h, s, v);
+      const hex = rgbToHex(r, g, b).replace('#', '');
+      const hsl = hsvToHsl(h, s, v);
+      const alphaPercent = Math.round(a * 100);
+
+      pickerFormatLabel.innerText = pickerFormat.toUpperCase();
+
+      pickerFormatMenu.querySelectorAll('.format-option').forEach(opt => {
+        if (opt.dataset.format === pickerFormat) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+
+      pickerFieldsContainer.innerHTML = '';
+
+      if (pickerFormat === 'hsl') {
+        const hInp = createNumInput(Math.round(hsl.h), 0, 360, (val) => {
+          const newHsv = hslToHsv(val, hsl.s, hsl.l);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const sInp = createNumInput(Math.round(hsl.s * 100), 0, 100, (val) => {
+          const newHsv = hslToHsv(hsl.h, val / 100, hsl.l);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const lInp = createNumInput(Math.round(hsl.l * 100), 0, 100, (val) => {
+          const newHsv = hslToHsv(hsl.h, hsl.s, val / 100);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const aInp = createPercentInput(alphaPercent, (val) => {
+          pickerColor.a = val / 100;
+          renderPickerUI(true);
+        });
+
+        pickerFieldsContainer.appendChild(hInp);
+        pickerFieldsContainer.appendChild(sInp);
+        pickerFieldsContainer.appendChild(lInp);
+        pickerFieldsContainer.appendChild(aInp);
+      } else if (pickerFormat === 'hex') {
+        const hexInp = document.createElement('input');
+        hexInp.type = 'text';
+        hexInp.className = 'picker-text-input hex-field';
+        hexInp.value = hex;
+        hexInp.style.flex = '2';
+        hexInp.addEventListener('input', () => {
+          let clean = hexInp.value.replace('#', '').trim();
+          if (clean.length === 6) {
+            const parsed = parseColorToHsv('#' + clean);
+            pickerColor.h = parsed.h;
+            pickerColor.s = parsed.s;
+            pickerColor.v = parsed.v;
+            renderPickerUI(true);
+          }
+        });
+        hexInp.addEventListener('change', () => {
+          let clean = hexInp.value.replace('#', '').trim();
+          if (clean.length === 3) {
+            clean = clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+          }
+          if (clean.length === 6) {
+            const parsed = parseColorToHsv('#' + clean);
+            pickerColor.h = parsed.h;
+            pickerColor.s = parsed.s;
+            pickerColor.v = parsed.v;
+          }
+          renderPickerUI();
+        });
+
+        const aInp = createPercentInput(alphaPercent, (val) => {
+          pickerColor.a = val / 100;
+          renderPickerUI(true);
+        });
+
+        pickerFieldsContainer.appendChild(hexInp);
+        pickerFieldsContainer.appendChild(aInp);
+      } else if (pickerFormat === 'rgb') {
+        const rInp = createNumInput(r, 0, 255, (val) => {
+          const newHsv = rgbToHsv(val, g, b);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const gInp = createNumInput(g, 0, 255, (val) => {
+          const newHsv = rgbToHsv(r, val, b);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const bInp = createNumInput(b, 0, 255, (val) => {
+          const newHsv = rgbToHsv(r, g, val);
+          pickerColor.h = newHsv.h;
+          pickerColor.s = newHsv.s;
+          pickerColor.v = newHsv.v;
+          renderPickerUI(true);
+        });
+        const aInp = createPercentInput(alphaPercent, (val) => {
+          pickerColor.a = val / 100;
+          renderPickerUI(true);
+        });
+
+        pickerFieldsContainer.appendChild(rInp);
+        pickerFieldsContainer.appendChild(gInp);
+        pickerFieldsContainer.appendChild(bInp);
+        pickerFieldsContainer.appendChild(aInp);
+      } else if (pickerFormat === 'hsb') {
+        const hInp = createNumInput(Math.round(h), 0, 360, (val) => {
+          pickerColor.h = val;
+          renderPickerUI(true);
+        });
+        const sInp = createNumInput(Math.round(s * 100), 0, 100, (val) => {
+          pickerColor.s = val / 100;
+          renderPickerUI(true);
+        });
+        const bInp = createNumInput(Math.round(v * 100), 0, 100, (val) => {
+          pickerColor.v = val / 100;
+          renderPickerUI(true);
+        });
+        const aInp = createPercentInput(alphaPercent, (val) => {
+          pickerColor.a = val / 100;
+          renderPickerUI(true);
+        });
+
+        pickerFieldsContainer.appendChild(hInp);
+        pickerFieldsContainer.appendChild(sInp);
+        pickerFieldsContainer.appendChild(bInp);
+        pickerFieldsContainer.appendChild(aInp);
+      } else if (pickerFormat === 'css') {
+        const cssInp = document.createElement('input');
+        cssInp.type = 'text';
+        cssInp.className = 'picker-text-input';
+        cssInp.style.flex = '1';
+        cssInp.value = a < 1 ? `rgba(${r}, ${g}, ${b}, ${+(a.toFixed(2))})` : `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s * 100)}%, ${Math.round(hsl.l * 100)}%)`;
+        cssInp.addEventListener('change', () => {
+          const parsed = parseColorToHsv(cssInp.value);
+          pickerColor.h = parsed.h;
+          pickerColor.s = parsed.s;
+          pickerColor.v = parsed.v;
+          pickerColor.a = parsed.a;
+          renderPickerUI();
+        });
+        pickerFieldsContainer.appendChild(cssInp);
+      }
+    }
+
+    function createNumInput(initialVal, min, max, onChange) {
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.className = 'picker-num-input';
+      inp.min = min.toString();
+      inp.max = max.toString();
+      inp.value = initialVal.toString();
+      inp.addEventListener('input', () => {
+        let val = parseInt(inp.value, 10);
+        if (isNaN(val)) return;
+        val = Math.max(min, Math.min(max, val));
+        onChange(val);
+      });
+      inp.addEventListener('change', () => {
+        let val = parseInt(inp.value, 10);
+        if (isNaN(val)) val = min;
+        val = Math.max(min, Math.min(max, val));
+        inp.value = val.toString();
+        onChange(val);
+      });
+      return inp;
+    }
+
+    function createPercentInput(initialVal, onChange) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'picker-num-input';
+      inp.value = `${initialVal}%`;
+      inp.addEventListener('input', () => {
+        let val = parseInt(inp.value.replace('%', ''), 10);
+        if (isNaN(val)) return;
+        val = Math.max(0, Math.min(100, val));
+        onChange(val);
+      });
+      inp.addEventListener('focus', () => {
+        inp.value = inp.value.replace('%', '');
+        inp.select();
+      });
+      inp.addEventListener('blur', () => {
+        let val = parseInt(inp.value.replace('%', ''), 10);
+        if (isNaN(val)) val = 100;
+        val = Math.max(0, Math.min(100, val));
+        inp.value = `${val}%`;
+        onChange(val);
+      });
+      return inp;
+    }
+
+    function updateSatValFromPointer(e) {
+      const rect = pickerSatValBox.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+      pickerColor.s = x / rect.width;
+      pickerColor.v = 1 - (y / rect.height);
+      renderPickerUI();
+    }
+
+    pickerSatValBox.addEventListener('pointerdown', (e) => {
+      isDraggingSatVal = true;
+      pickerSatValBox.setPointerCapture(e.pointerId);
+      updateSatValFromPointer(e);
     });
 
-    hexInput.oninput = () => {
-      let hex = hexInput.value.trim();
-      if (!hex.startsWith("#")) hex = "#" + hex;
-      if (/^#[0-9A-F]{6}$/i.test(hex)) {
-        const [h, s, l] = hexToHSL(hex);
-        hSlider.value = h;
-        sSlider.value = s;
-        lSlider.value = l;
-        updateLabels();
-        updateSliderBackgrounds();
+    pickerSatValBox.addEventListener('pointermove', (e) => {
+      if (isDraggingSatVal) {
+        updateSatValFromPointer(e);
       }
-    };
+    });
 
-    hexInput.onchange = () => {
-      let hex = hexInput.value.trim();
-      if (!hex.startsWith("#")) hex = "#" + hex;
-      if (/^#[0-9A-F]{6}$/i.test(hex)) {
-        const [h, s, l] = hexToHSL(hex);
-        hSlider.value = h;
-        sSlider.value = s;
-        lSlider.value = l;
-        updateLabels();
-        updateSliderBackgrounds();
-      }
-    };
+    pickerSatValBox.addEventListener('pointerup', (e) => {
+      isDraggingSatVal = false;
+      try { pickerSatValBox.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
 
-    function updateLabels() {
-      document.getElementById("val-hue").innerText = hSlider.value;
-      document.getElementById("val-sat").innerText = sSlider.value;
-      document.getElementById("val-light").innerText = lSlider.value;
+    function updateHueFromPointer(e) {
+      const rect = pickerHueTrack.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      pickerColor.h = Math.round((x / rect.width) * 360) % 360;
+      renderPickerUI();
     }
 
-    function updateSliderBackgrounds() {
-      const h = hSlider.value,
-        s = sSlider.value,
-        l = lSlider.value;
-      const gray = hslToHex(h, 0, l),
-        fullColor = hslToHex(h, 100, l);
-      sSlider.style.background = `linear-gradient(to right, ${gray}, ${fullColor})`;
-      const pureColor = hslToHex(h, s, 50);
-      lSlider.style.background = `linear-gradient(to right, #000, ${pureColor}, #fff)`;
+    pickerHueTrack.addEventListener('pointerdown', (e) => {
+      isDraggingHue = true;
+      pickerHueTrack.setPointerCapture(e.pointerId);
+      updateHueFromPointer(e);
+    });
+
+    pickerHueTrack.addEventListener('pointermove', (e) => {
+      if (isDraggingHue) {
+        updateHueFromPointer(e);
+      }
+    });
+
+    pickerHueTrack.addEventListener('pointerup', (e) => {
+      isDraggingHue = false;
+      try { pickerHueTrack.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
+
+    function updateAlphaFromPointer(e) {
+      const rect = pickerAlphaTrack.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      pickerColor.a = Math.max(0, Math.min(1, +( (x / rect.width).toFixed(2) )));
+      renderPickerUI();
     }
+
+    pickerAlphaTrack.addEventListener('pointerdown', (e) => {
+      isDraggingAlpha = true;
+      pickerAlphaTrack.setPointerCapture(e.pointerId);
+      updateAlphaFromPointer(e);
+    });
+
+    pickerAlphaTrack.addEventListener('pointermove', (e) => {
+      if (isDraggingAlpha) {
+        updateAlphaFromPointer(e);
+      }
+    });
+
+    pickerAlphaTrack.addEventListener('pointerup', (e) => {
+      isDraggingAlpha = false;
+      try { pickerAlphaTrack.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
+
+    pickerFormatBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pickerFormatMenu.classList.toggle('open');
+    });
+
+    pickerFormatMenu.querySelectorAll('.format-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pickerFormat = opt.dataset.format;
+        pickerFormatMenu.classList.remove('open');
+        renderFormatFields();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      pickerFormatMenu.classList.remove('open');
+    });
+
+    function openPicker(e) {
+      activeSwatch = e.target;
+      const initialColor = activeSwatch.dataset.color || '#6750A4';
+      const parsed = parseColorToHsv(initialColor);
+      pickerColor.h = parsed.h;
+      pickerColor.s = parsed.s;
+      pickerColor.v = parsed.v;
+      pickerColor.a = parsed.a !== undefined ? parsed.a : 1;
+      renderPickerUI();
+      pickerModal.style.display = 'flex';
+    }
+
+    const closePicker = () => {
+      pickerModal.style.display = 'none';
+      pickerFormatMenu.classList.remove('open');
+    };
+
+    function applyChosenColor() {
+      const { h, s, v } = pickerColor;
+      const { r, g, b } = hsvToRgb(h, s, v);
+      const finalHex = rgbToHex(r, g, b);
+      if (activeSwatch) {
+        updateSwatchColor(activeSwatch, finalHex);
+      }
+      closePicker();
+    }
+
+    if (pickerCloseBtn) pickerCloseBtn.addEventListener('click', closePicker);
+    if (pickerCancelBtn) pickerCancelBtn.addEventListener('click', closePicker);
+    if (pickerApplyBtn) pickerApplyBtn.addEventListener('click', applyChosenColor);
+
+    pickerModal.addEventListener('click', (e) => {
+      if (e.target === pickerModal) {
+        closePicker();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (pickerModal.style.display === 'flex') {
+        if (e.key === 'Escape') {
+          closePicker();
+        } else if (e.key === 'Enter') {
+          applyChosenColor();
+        }
+      }
+    });
 
     document
       .querySelectorAll("#fixed-container .color-swatch")
