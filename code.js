@@ -459,7 +459,7 @@ async function detectTypographyFromDocument() {
       const defaultMode = typoCol.modes[0];
       if (defaultMode) {
         const modeId = defaultMode.modeId;
-        const headVar = allLocalVars.find(v => v.name === "fontFamily/heading" && v.variableCollectionId === typoCol.id);
+        const headVar = allLocalVars.find(v => (v.name === "fontFamily/header" || v.name === "fontFamily/heading") && v.variableCollectionId === typoCol.id);
         const bodyVar = allLocalVars.find(v => v.name === "fontFamily/body" && v.variableCollectionId === typoCol.id);
 
         if (headVar) {
@@ -475,13 +475,13 @@ async function detectTypographyFromDocument() {
           }
         }
 
-        const headRegVar = allLocalVars.find(v => v.name === "fontWeight/heading/base" && v.variableCollectionId === typoCol.id);
-        const headMedVar = allLocalVars.find(v => v.name === "fontWeight/heading/medium" && v.variableCollectionId === typoCol.id);
-        const headBoldVar = allLocalVars.find(v => v.name === "fontWeight/heading/bold" && v.variableCollectionId === typoCol.id);
+        const headRegVar = allLocalVars.find(v => (v.name === "fontWeight/header/base" || v.name === "fontWeight/heading/base") && v.variableCollectionId === typoCol.id);
+        const headMedVar = allLocalVars.find(v => (v.name === "fontWeight/header/medium" || v.name === "fontWeight/heading/medium") && v.variableCollectionId === typoCol.id);
+        const headBoldVar = allLocalVars.find(v => (v.name === "fontWeight/header/bold" || v.name === "fontWeight/heading/bold") && v.variableCollectionId === typoCol.id);
 
-        const bodyRegVar = allLocalVars.find(v => (v.name === "fontWeight/base" || v.name === "fontWeight/regular") && v.variableCollectionId === typoCol.id);
-        const bodyMedVar = allLocalVars.find(v => v.name === "fontWeight/medium" && v.variableCollectionId === typoCol.id);
-        const bodyBoldVar = allLocalVars.find(v => v.name === "fontWeight/bold" && v.variableCollectionId === typoCol.id);
+        const bodyRegVar = allLocalVars.find(v => (v.name === "fontWeight/default/base" || v.name === "fontWeight/base" || v.name === "fontWeight/regular") && v.variableCollectionId === typoCol.id);
+        const bodyMedVar = allLocalVars.find(v => (v.name === "fontWeight/default/medium" || v.name === "fontWeight/medium") && v.variableCollectionId === typoCol.id);
+        const bodyBoldVar = allLocalVars.find(v => (v.name === "fontWeight/default/bold" || v.name === "fontWeight/bold") && v.variableCollectionId === typoCol.id);
 
         if (headRegVar || headMedVar || headBoldVar) {
           detected.headersStyles = {
@@ -798,10 +798,306 @@ figma.showUI(__html__, { width: 760, height: 750 });
   }
 })();
 
+async function exportVariablesToJson() {
+  try {
+    const collections = await figma.variables.getLocalVariableCollectionsAsync();
+    const allVars = await figma.variables.getLocalVariablesAsync();
+
+    if (!collections || collections.length === 0) {
+      figma.notify("No variable collections found in current file.");
+      return;
+    }
+
+    const colMap = new Map();
+    for (const c of collections) {
+      colMap.set(c.id, c.name);
+    }
+
+    const varMap = new Map();
+    for (const v of allVars) {
+      varMap.set(v.id, {
+        collectionName: colMap.get(v.variableCollectionId) || '',
+        name: v.name
+      });
+    }
+
+    const orderPreference = [
+      '_palettes',
+      'schemes',
+      '_paletteControls',
+      '_schemesControls',
+      'metrics',
+      '_blursControls',
+      '_glassControls',
+      '_typographyControls',
+      'layout',
+      '_statesControls',
+      'accessibility'
+    ];
+
+    const sortedCollections = [...collections].sort((a, b) => {
+      let idxA = orderPreference.indexOf(a.name);
+      let idxB = orderPreference.indexOf(b.name);
+      if (idxA === -1) idxA = 999;
+      if (idxB === -1) idxB = 999;
+      if (idxA !== idxB) return idxA - idxB;
+      return a.name.localeCompare(b.name);
+    });
+
+    const exportCollections = [];
+
+    for (const col of sortedCollections) {
+      const colVars = allVars.filter(v => v.variableCollectionId === col.id && !v.removed);
+      const modesList = [];
+
+      for (const mode of col.modes) {
+        const modeVariables = [];
+
+        for (const v of colVars) {
+          const rawVal = v.valuesByMode ? v.valuesByMode[mode.modeId] : undefined;
+          let isAlias = false;
+          let finalVal = null;
+
+          if (rawVal && typeof rawVal === 'object' && rawVal.type === 'VARIABLE_ALIAS') {
+            isAlias = true;
+            const targetInfo = varMap.get(rawVal.id);
+            if (targetInfo) {
+              finalVal = {
+                collection: targetInfo.collectionName,
+                name: targetInfo.name
+              };
+            } else {
+              finalVal = {
+                collection: '',
+                name: 'unknown'
+              };
+            }
+          } else if (v.resolvedType === 'COLOR') {
+            isAlias = false;
+            if (rawVal && typeof rawVal === 'object' && 'r' in rawVal) {
+              const alpha = rawVal.a !== undefined ? rawVal.a : 1;
+              if (alpha < 0.999) {
+                finalVal = rgbaToHex(rawVal.r, rawVal.g, rawVal.b, alpha);
+              } else {
+                finalVal = rgbToHex(rawVal.r, rawVal.g, rawVal.b);
+              }
+            } else {
+              finalVal = '#000000';
+            }
+          } else {
+            isAlias = false;
+            finalVal = rawVal !== undefined ? rawVal : (v.resolvedType === 'FLOAT' ? 0 : (v.resolvedType === 'BOOLEAN' ? false : ''));
+          }
+
+          let varType = 'string';
+          if (v.resolvedType === 'COLOR') varType = 'color';
+          else if (v.resolvedType === 'FLOAT') varType = 'number';
+          else if (v.resolvedType === 'BOOLEAN') varType = 'boolean';
+          else if (v.resolvedType === 'STRING') varType = 'string';
+
+          modeVariables.push({
+            name: v.name,
+            type: varType,
+            isAlias: isAlias,
+            value: finalVal,
+            scopes: v.scopes || [],
+            description: v.description || ''
+          });
+        }
+
+        modesList.push({
+          name: mode.name,
+          variables: modeVariables
+        });
+      }
+
+      exportCollections.push({
+        name: col.name,
+        modes: modesList
+      });
+    }
+
+    // Export Typography style collection
+    try {
+      const textStyles = await (figma.getLocalTextStylesAsync ? figma.getLocalTextStylesAsync() : Promise.resolve(figma.getLocalTextStyles()));
+      if (textStyles && textStyles.length > 0) {
+        const typoVars = textStyles.map(ts => {
+          const fontFam = ts.fontName ? ts.fontName.family : 'Google Sans';
+          const fontStyle = ts.fontName ? ts.fontName.style : 'Regular';
+          const lh = ts.lineHeight || { unit: 'AUTO' };
+          let lhVal = 0;
+          let lhUnit = 'AUTO';
+          if (lh.unit === 'PIXELS') {
+            lhVal = Math.round(lh.value);
+            lhUnit = 'PIXELS';
+          } else if (lh.unit === 'PERCENT') {
+            lhVal = Math.round(lh.value);
+            lhUnit = 'PERCENT';
+          }
+
+          const ls = ts.letterSpacing || { unit: 'PIXELS', value: 0 };
+          let lsVal = ls.value || 0;
+          let lsUnit = ls.unit || 'PIXELS';
+
+          let textCase = 'ORIGINAL';
+          if (ts.textCase === 'UPPER') textCase = 'UPPER';
+          else if (ts.textCase === 'LOWER') textCase = 'LOWER';
+          else if (ts.textCase === 'TITLE') textCase = 'TITLE';
+
+          let textDecoration = 'NONE';
+          if (ts.textDecoration === 'UNDERLINE') textDecoration = 'UNDERLINE';
+          else if (ts.textDecoration === 'STRIKETHROUGH') textDecoration = 'STRIKETHROUGH';
+
+          return {
+            name: ts.name,
+            type: 'typography',
+            isAlias: false,
+            value: {
+              fontSize: ts.fontSize,
+              fontFamily: fontFam,
+              fontWeight: fontStyle,
+              lineHeight: lhVal,
+              lineHeightUnit: lhUnit,
+              letterSpacing: lsVal,
+              letterSpacingUnit: lsUnit,
+              textCase: textCase,
+              textDecoration: textDecoration
+            }
+          };
+        });
+
+        exportCollections.push({
+          name: 'Typography',
+          modes: [
+            {
+              name: 'Style',
+              variables: typoVars
+            }
+          ]
+        });
+      }
+    } catch (e) {
+      console.warn("Could not export text styles:", e);
+    }
+
+    // Export Effects style collection
+    try {
+      const effectStyles = await (figma.getLocalEffectStylesAsync ? figma.getLocalEffectStylesAsync() : Promise.resolve(figma.getLocalEffectStyles()));
+      if (effectStyles && effectStyles.length > 0) {
+        const effectVars = effectStyles.map(es => {
+          return {
+            name: es.name,
+            type: 'effect',
+            isAlias: false,
+            value: {
+              effects: (es.effects || []).map(ef => {
+                const mapped = { type: ef.type };
+                if (ef.color) {
+                  mapped.color = {
+                    r: Math.round(ef.color.r * 255),
+                    g: Math.round(ef.color.g * 255),
+                    b: Math.round(ef.color.b * 255),
+                    a: ef.color.a !== undefined ? +(ef.color.a.toFixed(2)) : 1
+                  };
+                }
+                if (ef.offset) mapped.offset = { x: ef.offset.x, y: ef.offset.y };
+                if (ef.radius !== undefined) mapped.radius = ef.radius;
+                if (ef.spread !== undefined) mapped.spread = ef.spread;
+                return mapped;
+              })
+            }
+          };
+        });
+
+        exportCollections.push({
+          name: 'Effects',
+          modes: [
+            {
+              name: 'Style',
+              variables: effectVars
+            }
+          ]
+        });
+      }
+    } catch (e) {
+      console.warn("Could not export effect styles:", e);
+    }
+
+    // Export Grids style collection
+    try {
+      const gridStyles = await (figma.getLocalGridStylesAsync ? figma.getLocalGridStylesAsync() : Promise.resolve(figma.getLocalGridStyles()));
+      if (gridStyles && gridStyles.length > 0) {
+        const gridVars = gridStyles.map(gs => {
+          return {
+            name: gs.name,
+            type: 'grid',
+            isAlias: false,
+            value: {
+              layoutGrids: (gs.layoutGrids || []).map(lg => {
+                const mapped = { pattern: lg.pattern };
+                if (lg.color) {
+                  mapped.color = {
+                    r: Math.round(lg.color.r * 255),
+                    g: Math.round(lg.color.g * 255),
+                    b: Math.round(lg.color.b * 255),
+                    a: lg.color.a !== undefined ? +(lg.color.a.toFixed(2)) : 1
+                  };
+                }
+                if (lg.alignment) mapped.alignment = lg.alignment;
+                if (lg.gutterSize !== undefined) mapped.gutterSize = lg.gutterSize;
+                if (lg.offset !== undefined) mapped.offset = lg.offset;
+                if (lg.count !== undefined) mapped.count = lg.count;
+                return mapped;
+              })
+            }
+          };
+        });
+
+        exportCollections.push({
+          name: 'Grids',
+          modes: [
+            {
+              name: 'Style',
+              variables: gridVars
+            }
+          ]
+        });
+      }
+    } catch (e) {
+      console.warn("Could not export grid styles:", e);
+    }
+
+    const exportPayload = {
+      version: "1.0.4",
+      metadata: {
+        exportedAt: new Date().toISOString(),
+        generator: "me&my Friends - design system generator"
+      },
+      collections: exportCollections
+    };
+
+    figma.ui.postMessage({
+      type: 'export-variables-result',
+      json: JSON.stringify(exportPayload, null, 2),
+      filename: 'variables.json'
+    });
+
+    figma.notify("Variables exported successfully!");
+  } catch (err) {
+    console.error("Export variables error:", err);
+    figma.notify("Export failed: " + err.message);
+  }
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'resize') {
     const safeHeight = Math.max(500, Math.min(msg.height, 1200));
     figma.ui.resize(760, safeHeight);
+    return;
+  }
+
+  if (msg.type === 'export-variables') {
+    await exportVariablesToJson();
     return;
   }
 
@@ -2556,16 +2852,16 @@ figma.ui.onmessage = async (msg) => {
         return strVar;
       };
 
-      const headFontVar = createTypoString('fontFamily/heading', headersFont, 'FONT_FAMILY');
+      const headFontVar = createTypoString('fontFamily/header', headersFont, 'FONT_FAMILY', 'fontFamily/heading');
       const bodyFontVar = createTypoString('fontFamily/body', bodyFont, 'FONT_FAMILY');
 
-      const headRegWeightVar = createTypoString('fontWeight/heading/base', loadedHeadReg, 'FONT_STYLE');
-      const headMedWeightVar = createTypoString('fontWeight/heading/medium', loadedHeadMed, 'FONT_STYLE');
-      const headBoldWeightVar = createTypoString('fontWeight/heading/bold', loadedHeadBold, 'FONT_STYLE');
+      const headRegWeightVar = createTypoString('fontWeight/header/base', loadedHeadReg, 'FONT_STYLE', 'fontWeight/heading/base');
+      const headMedWeightVar = createTypoString('fontWeight/header/medium', loadedHeadMed, 'FONT_STYLE', 'fontWeight/heading/medium');
+      const headBoldWeightVar = createTypoString('fontWeight/header/bold', loadedHeadBold, 'FONT_STYLE', 'fontWeight/heading/bold');
 
-      const regWeightVar = createTypoString('fontWeight/base', loadedBodyReg, 'FONT_STYLE', 'fontWeight/regular');
-      const medWeightVar = createTypoString('fontWeight/medium', loadedBodyMed, 'FONT_STYLE');
-      const boldWeightVar = createTypoString('fontWeight/bold', loadedBodyBold, 'FONT_STYLE');
+      const regWeightVar = createTypoString('fontWeight/default/base', loadedBodyReg, 'FONT_STYLE', 'fontWeight/base');
+      const medWeightVar = createTypoString('fontWeight/default/medium', loadedBodyMed, 'FONT_STYLE', 'fontWeight/medium');
+      const boldWeightVar = createTypoString('fontWeight/default/bold', loadedBodyBold, 'FONT_STYLE', 'fontWeight/bold');
 
       const lsId_D = await resolveMetric(lsDisplay, null, null);
       const lsId_O = await resolveMetric(lsOthers, null, null);
@@ -2597,12 +2893,16 @@ figma.ui.onmessage = async (msg) => {
       const piOthersVar = createTypoGlobal('paragraphIndent', 'others', piId_O, piOthers);
 
       const selectedBaseSize = parseInt(baseFontSize, 10) || 16;
-      let displayLevels, headlineLevels, titleLevels, bodyLevels, labelLevels;
-      let displayLhOffset = 16, headlineLhOffset = 12, titleLhOffset = 12, bodyExplicitLh = 24, labelExplicitLh = 20;
+      let headingLevels, displayLevels, headlineLevels, titleLevels, bodyLevels, labelLevels;
+      let headingLhOffset = 16, displayLhOffset = 16, headlineLhOffset = 12, titleLhOffset = 12, bodyExplicitLh = 24, labelExplicitLh = 20;
 
       if (selectedBaseSize === 14) {
+        headingLevels = [
+          { name: 'h1', s: 96 }, { name: 'h2', s: 88 }, { name: 'h3', s: 80 },
+          { name: 'h4', s: 72 }, { name: 'h5', s: 64 }, { name: 'h6', s: 56 }
+        ];
         displayLevels = [
-          { name: 'mega', s: 56 }, { name: 'macro', s: 48 }, { name: 'huge', s: 40 },
+          { name: 'mega', s: 48 }, { name: 'macro', s: 44 }, { name: 'huge', s: 40 },
           { name: 'extraLarge', s: 36 }, { name: 'large', s: 32 }, { name: 'medium', s: 28 }
         ];
         headlineLevels = [
@@ -2620,8 +2920,12 @@ figma.ui.onmessage = async (msg) => {
         ];
         labelExplicitLh = 16;
       } else if (selectedBaseSize === 18) {
+        headingLevels = [
+          { name: 'h1', s: 112 }, { name: 'h2', s: 104 }, { name: 'h3', s: 96 },
+          { name: 'h4', s: 88 }, { name: 'h5', s: 80 }, { name: 'h6', s: 72 }
+        ];
         displayLevels = [
-          { name: 'mega', s: 72 }, { name: 'macro', s: 64 }, { name: 'huge', s: 56 },
+          { name: 'mega', s: 64 }, { name: 'macro', s: 60 }, { name: 'huge', s: 56 },
           { name: 'extraLarge', s: 48 }, { name: 'large', s: 44 }, { name: 'medium', s: 40 }
         ];
         headlineLevels = [
@@ -2640,8 +2944,12 @@ figma.ui.onmessage = async (msg) => {
         labelExplicitLh = 20;
       } else {
         // Default 16 px base
+        headingLevels = [
+          { name: 'h1', s: 104 }, { name: 'h2', s: 96 }, { name: 'h3', s: 88 },
+          { name: 'h4', s: 80 }, { name: 'h5', s: 72 }, { name: 'h6', s: 64 }
+        ];
         displayLevels = [
-          { name: 'mega', s: 64 }, { name: 'macro', s: 56 }, { name: 'huge', s: 48 },
+          { name: 'mega', s: 56 }, { name: 'macro', s: 52 }, { name: 'huge', s: 48 },
           { name: 'extraLarge', s: 44 }, { name: 'large', s: 40 }, { name: 'medium', s: 36 }
         ];
         headlineLevels = [
@@ -2673,6 +2981,7 @@ figma.ui.onmessage = async (msg) => {
       ];
 
       const typoScales = [
+        { cat: 'heading', levels: headingLevels, fontVar: headFontVar, fontStr: headersFont, lhOffset: headingLhOffset, globalGroup: 'display', weightConfigs: headWeightConfigs },
         { cat: 'display', levels: displayLevels, fontVar: headFontVar, fontStr: headersFont, lhOffset: displayLhOffset, globalGroup: 'display', weightConfigs: headWeightConfigs },
         { cat: 'headline', levels: headlineLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: headlineLhOffset, globalGroup: 'others', weightConfigs: bodyWeightConfigs },
         { cat: 'title', levels: titleLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: titleLhOffset, globalGroup: 'others', weightConfigs: bodyWeightConfigs },
@@ -2691,7 +3000,6 @@ figma.ui.onmessage = async (msg) => {
         for (const level of scale.levels) {
           const lhValue = level.explicitLh !== undefined ? level.explicitLh : (scale.explicitLh !== undefined ? scale.explicitLh : level.s + scale.lhOffset);
           const levelVal = level.name.toLowerCase();
-          const stepSize = scale.cat === 'display' ? 8 : 2;
 
           const szVarName = `fontSize/${scale.cat}/${levelVal}`;
           let szVar = ensureVariable(szVarName, metricsCol, "FLOAT", varLookupMap);
@@ -2714,12 +3022,13 @@ figma.ui.onmessage = async (msg) => {
           createTypoString(`styleNames/${scale.cat}/${levelVal}`, levelVal, null);
 
           const globals = globalVarMap[scale.globalGroup];
+          const isDisplayOrHeading = scale.cat === 'display' || scale.cat === 'heading';
 
           for (const wc of scale.weightConfigs) {
             const configs = [
-              { prefix: scale.cat === 'display' ? '' : 'default/', decoration: 'NONE' }
+              { prefix: isDisplayOrHeading ? '' : 'default/', decoration: 'NONE' }
             ];
-            if (scale.cat !== 'display') {
+            if (!isDisplayOrHeading) {
               configs.push({ prefix: '_stylized/underline/', decoration: 'UNDERLINE' });
               configs.push({ prefix: '_stylized/strikethrough/', decoration: 'STRIKETHROUGH' });
             }
@@ -2728,7 +3037,7 @@ figma.ui.onmessage = async (msg) => {
               const targetStyleName = `${cfg.prefix}${scale.cat}/${levelVal}/${wc.name.toLowerCase()}`;
 
               let tStyle = localTextStyles.find(s => s.name === targetStyleName);
-              if (!tStyle && scale.cat !== 'display' && cfg.decoration === 'NONE') {
+              if (!tStyle && !isDisplayOrHeading && cfg.decoration === 'NONE') {
                 const oldStyleName = `${scale.cat}/${levelVal}/${wc.name.toLowerCase()}`;
                 tStyle = localTextStyles.find(s => s.name === oldStyleName);
                 if (tStyle) {
@@ -2772,7 +3081,7 @@ figma.ui.onmessage = async (msg) => {
                 tStyle.textDecoration = cfg.decoration;
               }
 
-              const targetWrapStyle = scale.cat === 'display' ? targetWrapDisplay : targetWrapOthers;
+              const targetWrapStyle = isDisplayOrHeading ? targetWrapDisplay : targetWrapOthers;
               if ('textWrapStyle' in tStyle && tStyle.textWrapStyle !== targetWrapStyle) {
                 try {
                   tStyle.textWrapStyle = targetWrapStyle;
@@ -2781,6 +3090,8 @@ figma.ui.onmessage = async (msg) => {
                 }
               }
 
+              smartSetBoundVariable(tStyle, 'fontFamily', scale.fontVar);
+              smartSetBoundVariable(tStyle, 'fontStyle', wc.var);
               smartSetBoundVariable(tStyle, 'fontSize', szVar);
               smartSetBoundVariable(tStyle, 'lineHeight', lhVar);
               smartSetBoundVariable(tStyle, 'letterSpacing', globals.ls);

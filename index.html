@@ -991,7 +991,13 @@
     Advanced Options
   </button>
 
-  <button id="create" class="primary-btn">Generate System</button>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
+    <button id="create" class="primary-btn" style="margin-top: 0;">Generate System</button>
+    <button type="button" id="export-vars-btn" class="secondary-btn" style="margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Export Variables
+    </button>
+  </div>
 
   <!-- ADVANCED OPTIONS MODAL -->
   <div id="advanced-modal">
@@ -2371,9 +2377,33 @@
       updateFontStylesUI('body', e.target.value);
     });
 
+    const exportBtn = document.getElementById("export-vars-btn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", () => {
+        parent.postMessage({ pluginMessage: { type: "export-variables" } }, "*");
+      });
+    }
+
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
+
+      if (msg.type === "export-variables-result") {
+        try {
+          const blob = new Blob([msg.json], { type: "application/json;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = msg.filename || "variables.json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+          console.error("Download failed:", e);
+        }
+        return;
+      }
 
       if (msg.type === "fonts-loaded") {
         allFontStylesMap = msg.fontStyles || {};
