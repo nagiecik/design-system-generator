@@ -89,6 +89,14 @@
       width: 40%;
     }
 
+    .triple-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      flex-grow: 1;
+      width: 100%;
+    }
+
     .unit {
       font-size: 13px;
       color: #888;
@@ -1019,9 +1027,75 @@
       </div>
 
       <div class="row">
+        <div class="row-label">Line Height Scale</div>
+        <div class="row-content">
+          <div class="triple-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Heading</span>
+              <select id="lh-heading" class="font-select style-select">
+                <option value="default" selected>Default (1.0)</option>
+                <option value="1">1.0 (100%)</option>
+                <option value="1.1">1.1 (110%)</option>
+                <option value="1.15">1.15 (115%)</option>
+                <option value="1.2">1.2 (120%)</option>
+                <option value="1.25">1.25 (125%)</option>
+                <option value="1.33">1.33 (133%)</option>
+                <option value="1.4">1.4 (140%)</option>
+                <option value="1.5">1.5 (150%)</option>
+                <option value="1.6">1.6 (160%)</option>
+                <option value="1.75">1.75 (175%)</option>
+                <option value="2">2.0 (200%)</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Display</span>
+              <select id="lh-display" class="font-select style-select">
+                <option value="default" selected>Default (+12px)</option>
+                <option value="1">1.0 (100%)</option>
+                <option value="1.1">1.1 (110%)</option>
+                <option value="1.15">1.15 (115%)</option>
+                <option value="1.2">1.2 (120%)</option>
+                <option value="1.25">1.25 (125%)</option>
+                <option value="1.33">1.33 (133%)</option>
+                <option value="1.4">1.4 (140%)</option>
+                <option value="1.5">1.5 (150%)</option>
+                <option value="1.6">1.6 (160%)</option>
+                <option value="1.75">1.75 (175%)</option>
+                <option value="2">2.0 (200%)</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">Default</span>
+              <select id="lh-others" class="font-select style-select">
+                <option value="default" selected>Default (+16px)</option>
+                <option value="1">1.0 (100%)</option>
+                <option value="1.1">1.1 (110%)</option>
+                <option value="1.15">1.15 (115%)</option>
+                <option value="1.2">1.2 (120%)</option>
+                <option value="1.25">1.25 (125%)</option>
+                <option value="1.33">1.33 (133%)</option>
+                <option value="1.4">1.4 (140%)</option>
+                <option value="1.5">1.5 (150%)</option>
+                <option value="1.6">1.6 (160%)</option>
+                <option value="1.75">1.75 (175%)</option>
+                <option value="2">2.0 (200%)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
         <div class="row-label">Letter Spacing</div>
         <div class="row-content">
-          <div class="twin-inputs">
+          <div class="triple-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">Heading</span>
+              <div class="input-with-unit">
+                <input type="number" id="ls-heading" step="0.01" value="0" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
             <div class="field-stack">
               <span class="field-sublabel">Display</span>
               <div class="input-with-unit">
@@ -1030,7 +1104,7 @@
               </div>
             </div>
             <div class="field-stack">
-              <span class="field-sublabel">Text</span>
+              <span class="field-sublabel">Default</span>
               <div class="input-with-unit">
                 <input type="number" id="ls-others" step="0.01" value="0" />
                 <span class="unit-tag">px</span>
@@ -2189,6 +2263,7 @@
         bold: document.getElementById("body-weight-bold").value || 'Bold'
       };
 
+      const lsHeading = parseFloat(document.getElementById("ls-heading") ? document.getElementById("ls-heading").value : 0) || 0;
       const lsDisplay = parseFloat(document.getElementById("ls-display").value) || 0;
       const lsOthers = parseFloat(document.getElementById("ls-others").value) || 0;
       const psDisplay = parseFloat(document.getElementById("ps-display").value) || 0;
@@ -2220,11 +2295,14 @@
             radiusPreset,
             spacingPreset,
             baseFontSize,
+            lhHeading: document.getElementById("lh-heading") ? document.getElementById("lh-heading").value : "default",
+            lhDisplay: document.getElementById("lh-display") ? document.getElementById("lh-display").value : "default",
+            lhOthers: document.getElementById("lh-others") ? document.getElementById("lh-others").value : "default",
             headersFont: headersFont,
             headersStyles: headersStyles,
             bodyFont: bodyFont,
             bodyStyles: bodyStyles,
-            lsDisplay, lsOthers,
+            lsHeading, lsDisplay, lsOthers,
             psDisplay, psOthers,
             piDisplay, piOthers,
             wrapDisplay, wrapOthers,
@@ -2460,7 +2538,19 @@
         if (msg.radiusPreset) document.getElementById("radius-preset").value = msg.radiusPreset;
         if (msg.spacingPreset) document.getElementById("spacing-preset").value = msg.spacingPreset;
         if (msg.baseFontSize) document.getElementById("base-font-size").value = msg.baseFontSize;
+        if (msg.lhHeading && document.getElementById("lh-heading")) {
+          document.getElementById("lh-heading").value = msg.lhHeading;
+        }
+        if (msg.lhDisplay && document.getElementById("lh-display")) {
+          document.getElementById("lh-display").value = msg.lhDisplay;
+        }
+        if (msg.lhOthers && document.getElementById("lh-others")) {
+          document.getElementById("lh-others").value = msg.lhOthers;
+        }
 
+        if (msg.lsHeading !== undefined && document.getElementById("ls-heading")) {
+          document.getElementById("ls-heading").value = msg.lsHeading;
+        }
         if (msg.lsDisplay !== undefined) document.getElementById("ls-display").value = msg.lsDisplay;
         if (msg.lsOthers !== undefined) document.getElementById("ls-others").value = msg.lsOthers;
         if (msg.psDisplay !== undefined) document.getElementById("ps-display").value = msg.psDisplay;

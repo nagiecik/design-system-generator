@@ -136,6 +136,9 @@ function isLineHeightEqual(lh1, lh2) {
 function smartSetBoundVariable(target, field, variable) {
   if (!target || !variable) return;
   try {
+    if (field === 'letterSpacing' && target.letterSpacing && target.letterSpacing.unit !== 'PIXELS') {
+      target.letterSpacing = { value: target.letterSpacing.value || 0, unit: 'PIXELS' };
+    }
     const currentBound = target.boundVariables ? target.boundVariables[field] : null;
     const currentId = currentBound ? currentBound.id : null;
     if (currentId !== variable.id) {
@@ -515,13 +518,15 @@ async function detectTypographyFromDocument() {
         const modeId = defaultMode.modeId;
 
         // Spacing, indent
+        const lsHeadingVar = allLocalVars.find(v => v.name === "letterSpacing/heading" && v.variableCollectionId === metricsCol.id);
         const lsDisplayVar = allLocalVars.find(v => v.name === "letterSpacing/display" && v.variableCollectionId === metricsCol.id);
-        const lsOthersVar = allLocalVars.find(v => v.name === "letterSpacing/others" && v.variableCollectionId === metricsCol.id);
+        const lsOthersVar = allLocalVars.find(v => (v.name === "letterSpacing/default" || v.name === "letterSpacing/others") && v.variableCollectionId === metricsCol.id);
         const psDisplayVar = allLocalVars.find(v => v.name === "paragraphSpacing/display" && v.variableCollectionId === metricsCol.id);
         const psOthersVar = allLocalVars.find(v => v.name === "paragraphSpacing/others" && v.variableCollectionId === metricsCol.id);
         const piDisplayVar = allLocalVars.find(v => v.name === "paragraphIndent/display" && v.variableCollectionId === metricsCol.id);
         const piOthersVar = allLocalVars.find(v => v.name === "paragraphIndent/others" && v.variableCollectionId === metricsCol.id);
 
+        if (lsHeadingVar && typeof lsHeadingVar.valuesByMode[modeId] === 'number') detected.lsHeading = lsHeadingVar.valuesByMode[modeId];
         if (lsDisplayVar && typeof lsDisplayVar.valuesByMode[modeId] === 'number') detected.lsDisplay = lsDisplayVar.valuesByMode[modeId];
         if (lsOthersVar && typeof lsOthersVar.valuesByMode[modeId] === 'number') detected.lsOthers = lsOthersVar.valuesByMode[modeId];
         if (psDisplayVar && typeof psDisplayVar.valuesByMode[modeId] === 'number') detected.psDisplay = psDisplayVar.valuesByMode[modeId];
@@ -554,6 +559,36 @@ async function detectTypographyFromDocument() {
         if (fontSizeBodyLargeVar) {
           const szVal = fontSizeBodyLargeVar.valuesByMode[modeId];
           if (szVal === 14 || szVal === 16 || szVal === 18) detected.baseFontSize = szVal;
+        }
+
+        const matchLhScale = (szVarName, lhVarName) => {
+          const szV = allLocalVars.find(v => v.name === szVarName && v.variableCollectionId === metricsCol.id);
+          const lhV = allLocalVars.find(v => v.name === lhVarName && v.variableCollectionId === metricsCol.id);
+          if (szV && lhV) {
+            const sz = szV.valuesByMode[modeId];
+            const lh = lhV.valuesByMode[modeId];
+            if (typeof sz === 'number' && typeof lh === 'number' && sz > 0) {
+              const ratio = (lh / sz).toFixed(2);
+              const scales = ['1', '1.1', '1.15', '1.2', '1.25', '1.33', '1.4', '1.5', '1.6', '1.75', '2'];
+              return scales.find(s => parseFloat(s).toFixed(2) === ratio || Math.round(sz * parseFloat(s)) === lh);
+            }
+          }
+          return undefined;
+        };
+
+        const detectedLhH = matchLhScale('fontSize/heading/h1', 'lineHeight/heading/h1');
+        if (detectedLhH && detectedLhH !== '1') detected.lhHeading = detectedLhH;
+
+        const detectedLhD = matchLhScale('fontSize/display/large', 'lineHeight/display/large');
+        if (detectedLhD) detected.lhDisplay = detectedLhD;
+
+        const bodySzV = allLocalVars.find(v => v.name === 'fontSize/body/large' && v.variableCollectionId === metricsCol.id);
+        const bodyLhV = allLocalVars.find(v => v.name === 'lineHeight/body/large' && v.variableCollectionId === metricsCol.id);
+        if (bodySzV && bodyLhV && (bodySzV.valuesByMode[modeId] + 16 === bodyLhV.valuesByMode[modeId])) {
+          detected.lhOthers = 'default';
+        } else {
+          const detectedLhO = matchLhScale('fontSize/body/large', 'lineHeight/body/large');
+          if (detectedLhO) detected.lhOthers = detectedLhO;
         }
       }
     }
@@ -712,8 +747,12 @@ figma.showUI(__html__, { width: 760, height: 750 });
     const savedSpacingPreset = await figma.clientStorage.getAsync('pluginSpacingPreset');
     const savedStylePreset = await figma.clientStorage.getAsync('pluginStylePreset');
     const savedBaseFontSize = await figma.clientStorage.getAsync('pluginBaseFontSize');
+    const savedLH_H = await figma.clientStorage.getAsync('pluginLH_H');
+    const savedLH_D = await figma.clientStorage.getAsync('pluginLH_D');
+    const savedLH_O = await figma.clientStorage.getAsync('pluginLH_O');
     const savedHeadersFont = await figma.clientStorage.getAsync('pluginHeadersFont');
     const savedBodyFont = await figma.clientStorage.getAsync('pluginBodyFont');
+    const savedLS_H = await figma.clientStorage.getAsync('pluginLS_H');
     const savedLS_D = await figma.clientStorage.getAsync('pluginLS_D');
     const savedLS_O = await figma.clientStorage.getAsync('pluginLS_O');
     const savedPS_D = await figma.clientStorage.getAsync('pluginPS_D');
@@ -770,11 +809,15 @@ figma.showUI(__html__, { width: 760, height: 750 });
       radiusPreset: detectedTypo.radiusPreset || savedRadiusPreset || legacyRadius,
       spacingPreset: detectedTypo.spacingPreset || savedSpacingPreset || legacySpacing,
       baseFontSize: detectedTypo.baseFontSize || savedBaseFontSize || 16,
+      lhHeading: detectedTypo.lhHeading || savedLH_H || 'default',
+      lhDisplay: detectedTypo.lhDisplay || savedLH_D || 'default',
+      lhOthers: detectedTypo.lhOthers || savedLH_O || 'default',
       headersFont: detectedTypo.headersFont || savedHeadersFont,
       headersStyles: detectedTypo.headersStyles || savedHeadersStyles,
       bodyFont: detectedTypo.bodyFont || savedBodyFont,
       bodyStyles: detectedTypo.bodyStyles || savedBodyStyles,
       fontStyles: fontFamiliesMap,
+      lsHeading: detectedTypo.lsHeading !== undefined ? detectedTypo.lsHeading : savedLS_H,
       lsDisplay: detectedTypo.lsDisplay !== undefined ? detectedTypo.lsDisplay : savedLS_D,
       lsOthers: detectedTypo.lsOthers !== undefined ? detectedTypo.lsOthers : savedLS_O,
       psDisplay: detectedTypo.psDisplay !== undefined ? detectedTypo.psDisplay : savedPS_D,
@@ -1104,7 +1147,7 @@ figma.ui.onmessage = async (msg) => {
   if (msg.type === 'create-palette') {
     const seeds = msg.seeds;
     const remValue = 16;
-    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, stylePreset, baseFontSize, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, customGradients } = msg;
+    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, stylePreset, baseFontSize, lhHeading, lhDisplay, lhOthers, lsHeading, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, customGradients } = msg;
     const targetWrapDisplay = wrapDisplay || 'BALANCE';
     const targetWrapOthers = wrapOthers || 'BALANCE';
 
@@ -1177,10 +1220,14 @@ figma.ui.onmessage = async (msg) => {
       await figma.clientStorage.setAsync('pluginRadiusPreset', radiusPreset);
       await figma.clientStorage.setAsync('pluginSpacingPreset', gapPreset);
       await figma.clientStorage.setAsync('pluginBaseFontSize', baseFontSize || 16);
+      await figma.clientStorage.setAsync('pluginLH_H', lhHeading || 'default');
+      await figma.clientStorage.setAsync('pluginLH_D', lhDisplay || 'default');
+      await figma.clientStorage.setAsync('pluginLH_O', lhOthers || 'default');
       await figma.clientStorage.setAsync('pluginHeadersFont', headersFont);
       await figma.clientStorage.setAsync('pluginHeadersStyles', headersStyles);
       await figma.clientStorage.setAsync('pluginBodyFont', bodyFont);
       await figma.clientStorage.setAsync('pluginBodyStyles', bodyStyles);
+      await figma.clientStorage.setAsync('pluginLS_H', lsHeading !== undefined ? lsHeading : 0);
       await figma.clientStorage.setAsync('pluginLS_D', lsDisplay);
       await figma.clientStorage.setAsync('pluginLS_O', lsOthers);
       await figma.clientStorage.setAsync('pluginPS_D', psDisplay);
@@ -2135,13 +2182,14 @@ figma.ui.onmessage = async (msg) => {
         { name: 'layout/_negative/medium', scope: [], hidden: true, values: getNegativeLayoutConfig(presetConfigs.layoutMedium[gapPreset] || presetConfigs.layoutMedium.default) },
 
         // --- Stałe pomocnicze (Constants) ---
-        { name: 'constant/none', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 0 } },
-        { name: 'constant/full', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 9999 } },
-        { name: 'constant/one', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 1 } },
-        { name: 'constant/two', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 2 } },
-        { name: 'constant/three', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 3 } },
-        { name: 'constant/four', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 4 } },
-        { name: 'constant/eight', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT'], values: { default: 8 } }
+        { name: 'constant/none', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 0 } },
+        { name: 'constant/full', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 9999 } },
+        { name: 'constant/1', oldName: 'constant/one', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 1 } },
+        { name: 'constant/2', oldName: 'constant/two', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 2 } },
+        { name: 'constant/3', oldName: 'constant/three', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 3 } },
+        { name: 'constant/4', oldName: 'constant/four', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 4 } },
+        { name: 'constant/8', oldName: 'constant/eight', scope: ['CORNER_RADIUS', 'GAP', 'STROKE_FLOAT', 'WIDTH_HEIGHT'], values: { default: 8 } },
+        { name: 'constant/wcagMinTarget', scope: ['WIDTH_HEIGHT'], values: { default: 44 }, description: 'WCAG 2.1/2.2 minimum target size for interactive elements (44x44px).' }
       ];
 
       let constantNoneVar = null;
@@ -2151,11 +2199,11 @@ figma.ui.onmessage = async (msg) => {
         let semVar = ensureVariable(item.name, metricsCol, "FLOAT", varLookupMap, item.oldName);
 
         if (item.name === 'constant/none') constantNoneVar = semVar;
-        if (item.name === 'constant/one') constantOneVar = semVar;
+        if (item.name === 'constant/1' || item.name === 'constant/one') constantOneVar = semVar;
 
         const isHidden = item.hidden || item.name.includes('_focus') || item.name.includes('_negative');
         smartSetVariableMeta(semVar, {
-          description: `Semantic metric token for ${item.name}. Maps preset configurations.`,
+          description: item.description || `Semantic metric token for ${item.name}. Maps preset configurations.`,
           hiddenFromPublishing: isHidden,
           scopes: isHidden ? [] : item.scope
         });
@@ -2863,6 +2911,7 @@ figma.ui.onmessage = async (msg) => {
       const medWeightVar = createTypoString('fontWeight/default/medium', loadedBodyMed, 'FONT_STYLE', 'fontWeight/medium');
       const boldWeightVar = createTypoString('fontWeight/default/bold', loadedBodyBold, 'FONT_STYLE', 'fontWeight/bold');
 
+      const lsId_H = await resolveMetric(lsHeading, null, null);
       const lsId_D = await resolveMetric(lsDisplay, null, null);
       const lsId_O = await resolveMetric(lsOthers, null, null);
       const psId_D = await resolveMetric(psDisplay, null, null);
@@ -2870,9 +2919,10 @@ figma.ui.onmessage = async (msg) => {
       const piId_D = await resolveMetric(piDisplay, null, null);
       const piId_O = await resolveMetric(piOthers, null, null);
 
-      const createTypoGlobal = (name, category, aliasId, fallbackValue) => {
+      const createTypoGlobal = (name, category, aliasId, fallbackValue, oldCategory) => {
         const varName = `${name}/${category}`;
-        let v = ensureVariable(varName, metricsCol, "FLOAT", varLookupMap);
+        const oldVarName = oldCategory ? `${name}/${oldCategory}` : undefined;
+        let v = ensureVariable(varName, metricsCol, "FLOAT", varLookupMap, oldVarName);
         const val = parseFloat(fallbackValue) || 0;
         const scopeMap = { 'letterSpacing': 'LETTER_SPACING', 'paragraphSpacing': 'PARAGRAPH_SPACING', 'paragraphIndent': 'PARAGRAPH_INDENT' };
         smartSetVariableMeta(v, {
@@ -2884,11 +2934,11 @@ figma.ui.onmessage = async (msg) => {
         return v;
       };
 
+      const lsHeadingVar = createTypoGlobal('letterSpacing', 'heading', lsId_H, lsHeading);
       const lsDisplayVar = createTypoGlobal('letterSpacing', 'display', lsId_D, lsDisplay);
+      const lsOthersVar = createTypoGlobal('letterSpacing', 'default', lsId_O, lsOthers, 'others');
       const psDisplayVar = createTypoGlobal('paragraphSpacing', 'display', psId_D, psDisplay);
       const piDisplayVar = createTypoGlobal('paragraphIndent', 'display', piId_D, piDisplay);
-
-      const lsOthersVar = createTypoGlobal('letterSpacing', 'others', lsId_O, lsOthers);
       const psOthersVar = createTypoGlobal('paragraphSpacing', 'others', psId_O, psOthers);
       const piOthersVar = createTypoGlobal('paragraphIndent', 'others', piId_O, piOthers);
 
@@ -2981,24 +3031,47 @@ figma.ui.onmessage = async (msg) => {
       ];
 
       const typoScales = [
-        { cat: 'heading', levels: headingLevels, fontVar: headFontVar, fontStr: headersFont, lhOffset: headingLhOffset, globalGroup: 'display', weightConfigs: headWeightConfigs },
+        { cat: 'heading', levels: headingLevels, fontVar: headFontVar, fontStr: headersFont, lhOffset: headingLhOffset, globalGroup: 'heading', weightConfigs: headWeightConfigs },
         { cat: 'display', levels: displayLevels, fontVar: headFontVar, fontStr: headersFont, lhOffset: displayLhOffset, globalGroup: 'display', weightConfigs: headWeightConfigs },
-        { cat: 'headline', levels: headlineLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: headlineLhOffset, globalGroup: 'others', weightConfigs: bodyWeightConfigs },
-        { cat: 'title', levels: titleLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: titleLhOffset, globalGroup: 'others', weightConfigs: bodyWeightConfigs },
-        { cat: 'body', levels: bodyLevels, fontVar: bodyFontVar, fontStr: bodyFont, explicitLh: bodyExplicitLh, globalGroup: 'others', weightConfigs: bodyWeightConfigs },
-        { cat: 'label', levels: labelLevels, fontVar: bodyFontVar, fontStr: bodyFont, explicitLh: labelExplicitLh, globalGroup: 'others', weightConfigs: bodyWeightConfigs }
+        { cat: 'headline', levels: headlineLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: headlineLhOffset, globalGroup: 'default', weightConfigs: bodyWeightConfigs },
+        { cat: 'title', levels: titleLevels, fontVar: bodyFontVar, fontStr: bodyFont, lhOffset: titleLhOffset, globalGroup: 'default', weightConfigs: bodyWeightConfigs },
+        { cat: 'body', levels: bodyLevels, fontVar: bodyFontVar, fontStr: bodyFont, explicitLh: bodyExplicitLh, globalGroup: 'default', weightConfigs: bodyWeightConfigs },
+        { cat: 'label', levels: labelLevels, fontVar: bodyFontVar, fontStr: bodyFont, explicitLh: labelExplicitLh, globalGroup: 'default', weightConfigs: bodyWeightConfigs }
       ];
 
       const localTextStyles = await figma.getLocalTextStylesAsync();
 
       const globalVarMap = {
-        'display': { ls: lsDisplayVar, ps: psDisplayVar, pi: piDisplayVar },
-        'others': { ls: lsOthersVar, ps: psOthersVar, pi: piOthersVar }
+        'heading': { ls: lsHeadingVar, lsVal: parseFloat(lsHeading) || 0, ps: psDisplayVar, psVal: parseFloat(psDisplay) || 0, pi: piDisplayVar, piVal: parseFloat(piDisplay) || 0 },
+        'display': { ls: lsDisplayVar, lsVal: parseFloat(lsDisplay) || 0, ps: psDisplayVar, psVal: parseFloat(psDisplay) || 0, pi: piDisplayVar, piVal: parseFloat(piDisplay) || 0 },
+        'default': { ls: lsOthersVar, lsVal: parseFloat(lsOthers) || 0, ps: psOthersVar, psVal: parseFloat(psOthers) || 0, pi: piOthersVar, piVal: parseFloat(piOthers) || 0 },
+        'others': { ls: lsOthersVar, lsVal: parseFloat(lsOthers) || 0, ps: psOthersVar, psVal: parseFloat(psOthers) || 0, pi: piOthersVar, piVal: parseFloat(piOthers) || 0 }
       };
 
       for (const scale of typoScales) {
+        let scaleMultiplierStr = 'default';
+        if (scale.cat === 'heading') {
+          scaleMultiplierStr = lhHeading;
+        } else if (scale.cat === 'display') {
+          scaleMultiplierStr = lhDisplay;
+        } else {
+          scaleMultiplierStr = lhOthers;
+        }
+
         for (const level of scale.levels) {
-          const lhValue = level.explicitLh !== undefined ? level.explicitLh : (scale.explicitLh !== undefined ? scale.explicitLh : level.s + scale.lhOffset);
+          let lhValue;
+          const numMultiplier = parseFloat(scaleMultiplierStr);
+          if (!isNaN(numMultiplier) && numMultiplier > 0 && scaleMultiplierStr !== 'default') {
+            lhValue = Math.round(level.s * numMultiplier);
+          } else {
+            if (scale.cat === 'heading') {
+              lhValue = Math.round(level.s * 1.0);
+            } else if (scale.cat === 'display') {
+              lhValue = level.s + 12;
+            } else {
+              lhValue = level.s + 16;
+            }
+          }
           const levelVal = level.name.toLowerCase();
 
           const szVarName = `fontSize/${scale.cat}/${levelVal}`;
@@ -3088,6 +3161,14 @@ figma.ui.onmessage = async (msg) => {
                 } catch (e) {
                   console.warn("Could not set textWrapStyle on style:", e);
                 }
+              }
+
+              const targetLsVal = globals.lsVal !== undefined ? globals.lsVal : 0;
+              const isLsBound = tStyle.boundVariables && tStyle.boundVariables.letterSpacing && tStyle.boundVariables.letterSpacing.id === globals.ls.id;
+              if (!tStyle.letterSpacing || tStyle.letterSpacing.unit !== 'PIXELS') {
+                tStyle.letterSpacing = { value: targetLsVal, unit: 'PIXELS' };
+              } else if (!isLsBound && Math.abs((tStyle.letterSpacing.value || 0) - targetLsVal) > 0.01) {
+                tStyle.letterSpacing = { value: targetLsVal, unit: 'PIXELS' };
               }
 
               smartSetBoundVariable(tStyle, 'fontFamily', scale.fontVar);
