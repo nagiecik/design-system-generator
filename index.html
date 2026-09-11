@@ -882,7 +882,7 @@
 
   <h3>Typography & Spacing Scale</h3>
   <div class="row">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%;">
       <div class="field-stack">
         <span class="field-sublabel">Corner Radius</span>
         <select id="radius-preset" class="font-select">
@@ -899,6 +899,14 @@
           <option value="compact">Compact (Dense)</option>
           <option value="default" selected>Default (Standard)</option>
           <option value="relaxed">Relaxed (Spacious)</option>
+        </select>
+      </div>
+      <div class="field-stack">
+        <span class="field-sublabel">Button Hover</span>
+        <select id="button-hover-preset" class="font-select">
+          <option value="color" selected>Color Shift</option>
+          <option value="shape">Shape Morph</option>
+          <option value="both">Color &amp; Shape</option>
         </select>
       </div>
     </div>
@@ -2248,6 +2256,7 @@
       // Zbieramy presety i fonty
       const radiusPreset = document.getElementById("radius-preset").value || 'default';
       const spacingPreset = document.getElementById("spacing-preset").value || 'default';
+      const buttonHoverPreset = document.getElementById("button-hover-preset") ? document.getElementById("button-hover-preset").value : 'color';
       const baseFontSize = parseInt(document.getElementById("base-font-size").value, 10) || 16;
       const headersFont = document.getElementById("headers-font").value || 'Inter';
       const bodyFont = document.getElementById("body-font").value || 'Inter';
@@ -2294,6 +2303,7 @@
             seeds: allSeeds,
             radiusPreset,
             spacingPreset,
+            buttonHoverPreset,
             baseFontSize,
             lhHeading: document.getElementById("lh-heading") ? document.getElementById("lh-heading").value : "default",
             lhDisplay: document.getElementById("lh-display") ? document.getElementById("lh-display").value : "default",
@@ -2537,6 +2547,9 @@
 
         if (msg.radiusPreset) document.getElementById("radius-preset").value = msg.radiusPreset;
         if (msg.spacingPreset) document.getElementById("spacing-preset").value = msg.spacingPreset;
+        if (msg.buttonHoverPreset && document.getElementById("button-hover-preset")) {
+          document.getElementById("button-hover-preset").value = msg.buttonHoverPreset;
+        }
         if (msg.baseFontSize) document.getElementById("base-font-size").value = msg.baseFontSize;
         if (msg.lhHeading && document.getElementById("lh-heading")) {
           document.getElementById("lh-heading").value = msg.lhHeading;

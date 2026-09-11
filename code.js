@@ -312,6 +312,28 @@ function findAccessibleOnTone(seedRgb, baseTone, defaultOnTone) {
   }
 }
 
+function findAccessibleDarkBaseTone(seedRgb, neutralRgb, defaultTone = 50) {
+  const darkSurface = calculateTone(neutralRgb, 10);
+  const darkBg = calculateTone(neutralRgb, 5);
+
+  const checkContrast = (tone) => {
+    const color = calculateTone(seedRgb, tone);
+    return Math.min(getContrastRatio(color, darkSurface), getContrastRatio(color, darkBg));
+  };
+
+  if (checkContrast(defaultTone) >= 3.0) {
+    return defaultTone;
+  }
+
+  const candidateTones = [55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 99, 100];
+  for (const t of candidateTones) {
+    if (checkContrast(t) >= 3.0) {
+      return t;
+    }
+  }
+
+  return 100;
+}
 
 function capitalize(str) {
   if (!str) return '';
@@ -414,7 +436,11 @@ function getHexStringForTarget(target, seeds) {
   const role = target.role;
   const tone = parseInt(target.tone, 10);
 
-  if (role === 'shadesLight') return rgbaToHex(0, 0, 0, tone / 100);
+  if (role === 'shadesLight') {
+    const neutralHex = (seeds.neutral && seeds.neutral.color) ? seeds.neutral.color : '#000000';
+    const neutral5Rgb = calculateTone(hexToRgb(neutralHex), 5);
+    return rgbaToHex(neutral5Rgb.r, neutral5Rgb.g, neutral5Rgb.b, tone / 100);
+  }
   if (role === 'shadesDark') return rgbaToHex(1, 1, 1, tone / 100);
 
   if (role.startsWith('shades')) {
@@ -542,7 +568,38 @@ async function detectTypographyFromDocument() {
           else if (radVal === 8) detected.radiusPreset = 'compact';
           else if (radVal === 12) detected.radiusPreset = 'default';
           else if (radVal === 16) detected.radiusPreset = 'relaxed';
-          else if (radVal === 9999) detected.radiusPreset = 'full';
+          else if (radVal === 9999 || radVal === 24) detected.radiusPreset = 'full';
+        }
+
+        // Button hover preset detection based on radius/hover/base vs radius/base
+        const radiusHoverVar = allLocalVars.find(v => (v.name === "radius/hover/base" || v.name === "radius/hover") && v.variableCollectionId === metricsCol.id);
+        if (radiusHoverVar && radiusBaseVar) {
+          const hVal = radiusHoverVar.valuesByMode[modeId];
+          const dVal = radiusBaseVar.valuesByMode[modeId];
+          if (hVal !== undefined && dVal !== undefined && hVal < dVal) {
+            const schemeCol = collections.find(c => c.name === "schemes");
+            if (schemeCol) {
+              const primaryVar = allLocalVars.find(v => v.name === "primary" && v.variableCollectionId === schemeCol.id);
+              const primaryHoverVar = allLocalVars.find(v => v.name === "primaryHover" && v.variableCollectionId === schemeCol.id);
+              if (primaryVar && primaryHoverVar && primaryVar.valuesByMode && primaryHoverVar.valuesByMode) {
+                const isColorSame = Object.keys(primaryVar.valuesByMode).every(m => {
+                  const v1 = primaryVar.valuesByMode[m];
+                  const v2 = primaryHoverVar.valuesByMode[m];
+                  if (v1 && v2 && typeof v1 === 'object' && typeof v2 === 'object') {
+                    return v1.id === v2.id;
+                  }
+                  return v1 === v2;
+                });
+                detected.buttonHoverPreset = isColorSame ? 'shape' : 'both';
+              } else {
+                detected.buttonHoverPreset = 'shape';
+              }
+            } else {
+              detected.buttonHoverPreset = 'shape';
+            }
+          } else {
+            detected.buttonHoverPreset = 'color';
+          }
         }
 
         // Spacing preset based on layout/base (or fallback layout/regular) default value
@@ -745,6 +802,7 @@ figma.showUI(__html__, { width: 760, height: 750 });
     const savedSettings = await figma.clientStorage.getAsync('pluginSettings');
     const savedRadiusPreset = await figma.clientStorage.getAsync('pluginRadiusPreset');
     const savedSpacingPreset = await figma.clientStorage.getAsync('pluginSpacingPreset');
+    const savedButtonHoverPreset = await figma.clientStorage.getAsync('pluginButtonHoverPreset');
     const savedStylePreset = await figma.clientStorage.getAsync('pluginStylePreset');
     const savedBaseFontSize = await figma.clientStorage.getAsync('pluginBaseFontSize');
     const savedLH_H = await figma.clientStorage.getAsync('pluginLH_H');
@@ -808,6 +866,7 @@ figma.showUI(__html__, { width: 760, height: 750 });
       seeds: seeds,
       radiusPreset: detectedTypo.radiusPreset || savedRadiusPreset || legacyRadius,
       spacingPreset: detectedTypo.spacingPreset || savedSpacingPreset || legacySpacing,
+      buttonHoverPreset: detectedTypo.buttonHoverPreset || savedButtonHoverPreset || 'color',
       baseFontSize: detectedTypo.baseFontSize || savedBaseFontSize || 16,
       lhHeading: detectedTypo.lhHeading || savedLH_H || 'default',
       lhDisplay: detectedTypo.lhDisplay || savedLH_D || 'default',
@@ -1147,7 +1206,8 @@ figma.ui.onmessage = async (msg) => {
   if (msg.type === 'create-palette') {
     const seeds = msg.seeds;
     const remValue = 16;
-    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, stylePreset, baseFontSize, lhHeading, lhDisplay, lhOthers, lsHeading, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, customGradients } = msg;
+    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, buttonHoverPreset: msgButtonHoverPreset, stylePreset, baseFontSize, lhHeading, lhDisplay, lhOthers, lsHeading, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, customGradients } = msg;
+    const buttonHoverPreset = msgButtonHoverPreset || 'color';
     const targetWrapDisplay = wrapDisplay || 'BALANCE';
     const targetWrapOthers = wrapOthers || 'BALANCE';
 
@@ -1219,6 +1279,7 @@ figma.ui.onmessage = async (msg) => {
       await figma.clientStorage.setAsync('pluginSettings', seeds);
       await figma.clientStorage.setAsync('pluginRadiusPreset', radiusPreset);
       await figma.clientStorage.setAsync('pluginSpacingPreset', gapPreset);
+      await figma.clientStorage.setAsync('pluginButtonHoverPreset', buttonHoverPreset);
       await figma.clientStorage.setAsync('pluginBaseFontSize', baseFontSize || 16);
       await figma.clientStorage.setAsync('pluginLH_H', lhHeading || 'default');
       await figma.clientStorage.setAsync('pluginLH_D', lhDisplay || 'default');
@@ -1347,8 +1408,11 @@ figma.ui.onmessage = async (msg) => {
         createdVariablesMap.set(`${groupName}/${step}`, shadeVar.id);
       };
 
+      const neutralHex = (seeds.neutral && seeds.neutral.color) ? seeds.neutral.color : '#000000';
+      const neutral5Rgb = calculateTone(hexToRgb(neutralHex), 5);
+
       for (const step of opacitySteps) {
-        await createPaletteShade('shadesLight', step, { r: 0, g: 0, b: 0, a: step / 100 });  // Czarne z alfą
+        await createPaletteShade('shadesLight', step, { r: neutral5Rgb.r, g: neutral5Rgb.g, b: neutral5Rgb.b, a: step / 100 });
         await createPaletteShade('shadesDark', step, { r: 1, g: 1, b: 1, a: step / 100 });   // Białe z alfą
 
         for (const role of ['primary', 'secondary', 'tertiary']) {
@@ -1446,7 +1510,9 @@ figma.ui.onmessage = async (msg) => {
                 if (role.startsWith('shades')) {
                   let val;
                   if (role === 'shadesLight') {
-                    val = { r: 0, g: 0, b: 0, a: tone / 100 };
+                    const neutralHex = (seeds.neutral && seeds.neutral.color) ? seeds.neutral.color : '#000000';
+                    const neutral5Rgb = calculateTone(hexToRgb(neutralHex), 5);
+                    val = { r: neutral5Rgb.r, g: neutral5Rgb.g, b: neutral5Rgb.b, a: tone / 100 };
                   } else if (role === 'shadesDark') {
                     val = { r: 1, g: 1, b: 1, a: tone / 100 };
                   } else {
@@ -1497,14 +1563,14 @@ figma.ui.onmessage = async (msg) => {
       const schemesMap = new Map();
 
       const genericMapping = {
-        base: { light: 50, lightContrast: 35, dark: 60, darkContrast: 70, accessibility: 60 },
+        base: { light: 50, lightContrast: 35, dark: 50, darkContrast: 70, accessibility: 60 },
         onDefault: { light: 100, lightContrast: 100, dark: 100, darkContrast: 10, accessibility: 0 },
         container: { light: 95, lightContrast: 85, dark: 25, darkContrast: 35, accessibility: 25 },
         onContainer: { light: 40, lightContrast: 30, dark: 90, darkContrast: 95, accessibility: 90 },
         hover: { light: 60, lightContrast: 45, dark: 65, darkContrast: 85, accessibility: 65 },
-        onRaised: { light: 60, lightContrast: 40, dark: 70, darkContrast: 50, accessibility: 70 },
-        onDim: { light: 40, lightContrast: 30, dark: 60, darkContrast: 80, accessibility: 60 },
-        onSubtle: { light: 50, lightContrast: 30, dark: 60, darkContrast: 60, accessibility: 60 },
+        onRaised: { light: 60, lightContrast: 40, dark: 60, darkContrast: 50, accessibility: 70 },
+        onDim: { light: 40, lightContrast: 30, dark: 40, darkContrast: 80, accessibility: 60 },
+        onSubtle: { light: 50, lightContrast: 30, dark: 50, darkContrast: 60, accessibility: 60 },
         disabled: { light: 90, lightContrast: 80, dark: 30, darkContrast: 35, accessibility: 30 },
         onDisabled: { light: 70, lightContrast: 50, dark: 60, darkContrast: 65, accessibility: 60 }
       };
@@ -1592,6 +1658,15 @@ figma.ui.onmessage = async (msg) => {
         { name: "elevationHigher", oldName: ["shadowHigher", "shadowHighest"], light: "shadesLight/22", lightContrast: "shadesLight/35", dark: "shadesLight/40", darkContrast: "shadesLight/60", accessibility: "shadesLight/0" },
         { name: "elevationHighest", oldName: ["shadowHighest"], light: "shadesLight/30", lightContrast: "shadesLight/40", dark: "shadesLight/45", darkContrast: "shadesLight/70", accessibility: "shadesLight/0" },
         { name: "elevationMax", oldName: ["shadowMax"], light: "shadesLight/40", lightContrast: "shadesLight/50", dark: "shadesLight/50", darkContrast: "shadesLight/80", accessibility: "shadesLight/0" },
+        // elevationInverse
+        { name: "elevationInverseLowest", light: "shadesLight/3", lightContrast: "shadesLight/10", dark: "shadesDark/15", darkContrast: "shadesDark/35", accessibility: "shadesLight/0" },
+        { name: "elevationInverseLower", light: "shadesLight/6", lightContrast: "shadesLight/15", dark: "shadesDark/20", darkContrast: "shadesDark/40", accessibility: "shadesLight/0" },
+        { name: "elevationInverseLow", light: "shadesLight/10", lightContrast: "shadesLight/20", dark: "shadesDark/25", darkContrast: "shadesDark/45", accessibility: "shadesLight/0" },
+        { name: "elevationInverseBase", light: "shadesLight/14", lightContrast: "shadesLight/25", dark: "shadesDark/30", darkContrast: "shadesDark/50", accessibility: "shadesLight/0" },
+        { name: "elevationInverseHigh", light: "shadesLight/18", lightContrast: "shadesLight/30", dark: "shadesDark/35", darkContrast: "shadesDark/55", accessibility: "shadesLight/0" },
+        { name: "elevationInverseHigher", light: "shadesLight/22", lightContrast: "shadesLight/35", dark: "shadesDark/40", darkContrast: "shadesDark/60", accessibility: "shadesLight/0" },
+        { name: "elevationInverseHighest", light: "shadesLight/30", lightContrast: "shadesLight/40", dark: "shadesDark/45", darkContrast: "shadesDark/70", accessibility: "shadesLight/0" },
+        { name: "elevationInverseMax", light: "shadesLight/40", lightContrast: "shadesLight/50", dark: "shadesDark/50", darkContrast: "shadesDark/80", accessibility: "shadesLight/0" },
         { name: "highlightLowest", light: "shadesDark/30", lightContrast: "shadesDark/40", dark: "shadesLight/10", darkContrast: "shadesLight/20", accessibility: "shadesLight/20" },
         { name: "highlightLower", light: "shadesDark/35", lightContrast: "shadesDark/45", dark: "shadesLight/15", darkContrast: "shadesLight/25", accessibility: "shadesLight/25" },
         { name: "highlightLow", light: "shadesDark/40", lightContrast: "shadesDark/50", dark: "shadesLight/20", darkContrast: "shadesLight/30", accessibility: "shadesLight/30" },
@@ -1640,16 +1715,43 @@ figma.ui.onmessage = async (msg) => {
         const capitalizedName = capitalize(customName);
         const isState = ['action', 'success', 'warning', 'error'].includes(role);
         const mapping = isState ? stateMapping : genericMapping;
+        const isShapeOnlyHover = buttonHoverPreset === 'shape';
 
-        let onDefaultRules = mapping.onDefault;
+        let baseRules = mapping.base;
         if (!isState && seeds[role] && seeds[role].color) {
           const seedRgb = hexToRgb(seeds[role].color);
+          const neutralHex = (seeds.neutral && seeds.neutral.color) ? seeds.neutral.color : '#000000';
+          const neutralRgb = hexToRgb(neutralHex);
+          const darkBaseTone = findAccessibleDarkBaseTone(seedRgb, neutralRgb, mapping.base.dark);
+          baseRules = { ...mapping.base, dark: darkBaseTone };
+        }
+
+        let onDefaultRules = mapping.onDefault;
+        let isWcagOverridden = false;
+        if (!isState && seeds[role] && seeds[role].color) {
+          const seedRgb = hexToRgb(seeds[role].color);
+          const computedLight = findAccessibleOnTone(seedRgb, baseRules.light, mapping.onDefault.light);
+          const computedLightContrast = findAccessibleOnTone(seedRgb, baseRules.lightContrast, mapping.onDefault.lightContrast);
+          const computedDark = findAccessibleOnTone(seedRgb, baseRules.dark, mapping.onDefault.dark);
+          const computedDarkContrast = findAccessibleOnTone(seedRgb, baseRules.darkContrast, mapping.onDefault.darkContrast);
+          const computedAccessibility = findAccessibleOnTone(seedRgb, baseRules.accessibility, mapping.onDefault.accessibility);
+
+          if (
+            computedLight !== mapping.onDefault.light ||
+            computedLightContrast !== mapping.onDefault.lightContrast ||
+            computedDark !== mapping.onDefault.dark ||
+            computedDarkContrast !== mapping.onDefault.darkContrast ||
+            computedAccessibility !== mapping.onDefault.accessibility
+          ) {
+            isWcagOverridden = true;
+          }
+
           onDefaultRules = {
-            light: findAccessibleOnTone(seedRgb, mapping.base.light, mapping.onDefault.light),
-            lightContrast: findAccessibleOnTone(seedRgb, mapping.base.lightContrast, mapping.onDefault.lightContrast),
-            dark: findAccessibleOnTone(seedRgb, mapping.base.dark, mapping.onDefault.dark),
-            darkContrast: findAccessibleOnTone(seedRgb, mapping.base.darkContrast, mapping.onDefault.darkContrast),
-            accessibility: findAccessibleOnTone(seedRgb, mapping.base.accessibility, mapping.onDefault.accessibility)
+            light: computedLight,
+            lightContrast: computedLightContrast,
+            dark: computedDark,
+            darkContrast: computedDarkContrast,
+            accessibility: computedAccessibility
           };
         }
 
@@ -1660,15 +1762,20 @@ figma.ui.onmessage = async (msg) => {
           { name: `on${capitalizedName}Dim`, rules: mapping.onDim },
           { name: `on${capitalizedName}Subtle`, rules: mapping.onSubtle },
           { name: `on${capitalizedName}Raised`, rules: mapping.onRaised },
-          { name: `${customName}Hover`, rules: mapping.hover },
+          { name: `${customName}Hover`, rules: isShapeOnlyHover ? mapping.base : mapping.hover },
           { name: `${customName}Disabled`, rules: mapping.disabled },
           { name: `on${capitalizedName}Disabled`, rules: mapping.onDisabled },
         ] : [
-          { name: customName, rules: mapping.base },
+          { name: customName, rules: baseRules },
           { name: `on${capitalizedName}Default`, rules: onDefaultRules },
+          ...(isWcagOverridden ? [{
+            name: `on${capitalizedName}Unstable`,
+            rules: mapping.onDefault,
+            description: `Original unvalidated onDefault color (non-WCAG compliant fallback, use at own risk).`
+          }] : []),
           { name: `${customName}Container`, rules: mapping.container },
           { name: `on${capitalizedName}Container`, rules: mapping.onContainer },
-          { name: `${customName}Hover`, rules: mapping.hover },
+          { name: `${customName}Hover`, rules: isShapeOnlyHover ? baseRules : mapping.hover },
           { name: `on${capitalizedName}Raised`, rules: mapping.onRaised },
           { name: `on${capitalizedName}Dim`, rules: mapping.onDim },
           { name: `on${capitalizedName}Subtle`, rules: mapping.onSubtle },
@@ -1679,7 +1786,7 @@ figma.ui.onmessage = async (msg) => {
         for (const token of tokensToCreate) {
           let semanticVar = ensureVariable(token.name, schemeCollection, "COLOR", varLookupMap, token.oldName);
           smartSetVariableMeta(semanticVar, {
-            description: `Semantic color token: ${token.name}.`
+            description: token.description || `Semantic color token: ${token.name}.`
           });
           setScopes(semanticVar, token.name);
           schemesMap.set(token.name, semanticVar.id);
@@ -1692,7 +1799,7 @@ figma.ui.onmessage = async (msg) => {
             "onErrorDim": { role: "error", tone: 100 },
             "onErrorSubtle": { role: "error", tone: 90 },
             "onErrorRaised": { role: "error", tone: 80 },
-            "errorHover": { role: "error", tone: 30 },
+            "errorHover": { role: "error", tone: isShapeOnlyHover ? 100 : 30 },
             "errorDisabled": { role: "error", tone: 40 },
             "onErrorDisabled": { role: "error", tone: 80 }
           };
@@ -1915,21 +2022,21 @@ figma.ui.onmessage = async (msg) => {
           compact: { default: 2 },
           default: { default: 4 },
           relaxed: { default: 8 },
-          full: { default: 9999 }
+          full: { default: 20 }
         },
         radiusSmall: {
           none: { default: 0 },
           compact: { default: 4 },
           default: { default: 8 },
           relaxed: { default: 12 },
-          full: { default: 9999 }
+          full: { default: 22 }
         },
         radiusBase: {
           none: { default: 0 },
           compact: { default: 8 },
           default: { default: 12 },
           relaxed: { default: 16 },
-          full: { default: 9999 }
+          full: { default: 24 }
         },
         get radiusRegular() { return this.radiusBase; },
         radiusLarge: {
@@ -1937,7 +2044,35 @@ figma.ui.onmessage = async (msg) => {
           compact: { default: 16 },
           default: { default: 24 },
           relaxed: { default: 32 },
-          full: { default: 9999 }
+          full: { default: 28 }
+        },
+        radiusHoverExtraSmall: {
+          none: { default: 0 },
+          compact: { default: 1 },
+          default: { default: 2 },
+          relaxed: { default: 4 },
+          full: { default: 8 }
+        },
+        radiusHoverSmall: {
+          none: { default: 0 },
+          compact: { default: 2 },
+          default: { default: 4 },
+          relaxed: { default: 8 },
+          full: { default: 12 }
+        },
+        radiusHoverBase: {
+          none: { default: 0 },
+          compact: { default: 4 },
+          default: { default: 8 },
+          relaxed: { default: 12 },
+          full: { default: 16 }
+        },
+        radiusHoverLarge: {
+          none: { default: 0 },
+          compact: { default: 8 },
+          default: { default: 12 },
+          relaxed: { default: 16 },
+          full: { default: 24 }
         },
         radiusContainerPico: {
           none: { default: 0 },
@@ -2117,12 +2252,20 @@ figma.ui.onmessage = async (msg) => {
         default: -(config.default || 0)
       });
 
+      const isShapeMorph = buttonHoverPreset === 'shape' || buttonHoverPreset === 'both';
+
       const semanticMetrics = [
         // --- Promienie zaokrągleń (Radii) ---
         { name: 'radius/extraSmall', scope: ['CORNER_RADIUS'], values: presetConfigs.radiusExtraSmall[radiusPreset] || presetConfigs.radiusExtraSmall.default },
         { name: 'radius/small', scope: ['CORNER_RADIUS'], values: presetConfigs.radiusSmall[radiusPreset] || presetConfigs.radiusSmall.default },
         { name: 'radius/base', oldName: 'radius/regular', scope: ['CORNER_RADIUS'], values: presetConfigs.radiusBase[radiusPreset] || presetConfigs.radiusBase.default },
         { name: 'radius/large', scope: ['CORNER_RADIUS'], values: presetConfigs.radiusLarge[radiusPreset] || presetConfigs.radiusLarge.default },
+
+        // --- Promienie zaokrągleń Hover (Grupa radius/hover: extraSmall, small, base, large) ---
+        { name: 'radius/hover/extraSmall', scope: ['CORNER_RADIUS'], values: isShapeMorph ? (presetConfigs.radiusHoverExtraSmall[radiusPreset] || presetConfigs.radiusHoverExtraSmall.default) : (presetConfigs.radiusExtraSmall[radiusPreset] || presetConfigs.radiusExtraSmall.default) },
+        { name: 'radius/hover/small', scope: ['CORNER_RADIUS'], values: isShapeMorph ? (presetConfigs.radiusHoverSmall[radiusPreset] || presetConfigs.radiusHoverSmall.default) : (presetConfigs.radiusSmall[radiusPreset] || presetConfigs.radiusSmall.default) },
+        { name: 'radius/hover/base', oldName: 'radius/hover', scope: ['CORNER_RADIUS'], values: isShapeMorph ? (presetConfigs.radiusHoverBase[radiusPreset] || presetConfigs.radiusHoverBase.default) : (presetConfigs.radiusBase[radiusPreset] || presetConfigs.radiusBase.default) },
+        { name: 'radius/hover/large', scope: ['CORNER_RADIUS'], values: isShapeMorph ? (presetConfigs.radiusHoverLarge[radiusPreset] || presetConfigs.radiusHoverLarge.default) : (presetConfigs.radiusLarge[radiusPreset] || presetConfigs.radiusLarge.default) },
 
         // --- Promienie zaokrągleń dla kontenerów (Container Radii) ---
         { name: 'radius/container/pico', scope: ['CORNER_RADIUS'], values: presetConfigs.radiusContainerPico[radiusPreset] || presetConfigs.radiusContainerPico.default },
