@@ -2033,21 +2033,21 @@ figma.ui.onmessage = async (msg) => {
           compact: { default: 2 },
           default: { default: 4 },
           relaxed: { default: 8 },
-          full: { default: 20 }
+          full: { default: 9999 }
         },
         radiusSmall: {
           none: { default: 0 },
           compact: { default: 4 },
           default: { default: 8 },
           relaxed: { default: 12 },
-          full: { default: 22 }
+          full: { default: 9999 }
         },
         radiusBase: {
           none: { default: 0 },
           compact: { default: 8 },
           default: { default: 12 },
           relaxed: { default: 16 },
-          full: { default: 24 }
+          full: { default: 9999 }
         },
         get radiusRegular() { return this.radiusBase; },
         radiusLarge: {
@@ -2055,7 +2055,7 @@ figma.ui.onmessage = async (msg) => {
           compact: { default: 16 },
           default: { default: 24 },
           relaxed: { default: 32 },
-          full: { default: 28 }
+          full: { default: 9999 }
         },
         radiusHoverExtraSmall: {
           none: { default: 0 },
