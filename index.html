@@ -1191,15 +1191,34 @@
       </div>
 
       <div class="row">
-        <div class="row-label">Layout XL Margin</div>
+        <div class="row-label">Layout Margins</div>
         <div class="row-content">
-          <div class="input-with-unit">
-            <input type="number" id="layout-margin-xl" min="32" max="200" value="72" />
-            <span class="unit-tag">px</span>
+          <div class="triple-inputs">
+            <div class="field-stack">
+              <span class="field-sublabel">LG (1366)</span>
+              <div class="input-with-unit">
+                <input type="number" id="layout-margin-lg" min="16" max="200" placeholder="Auto" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">XL (1536)</span>
+              <div class="input-with-unit">
+                <input type="number" id="layout-margin-xl" min="32" max="200" value="72" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
+            <div class="field-stack">
+              <span class="field-sublabel">2XL (1920)</span>
+              <div class="input-with-unit">
+                <input type="number" id="layout-margin-2xl" min="32" max="300" placeholder="Auto" />
+                <span class="unit-tag">px</span>
+              </div>
+            </div>
           </div>
         </div>
         <div style="font-size: 10px; color: #777; margin-top: 4px; line-height: 1.4;">
-          Breakpoint XL margin (32px - 200px). Breakpoint LG is calculated proportionally. Breakpoints MD & SM are fixed at 32px and 16px.
+          Marginesy dla breakpointów: wpisz customowe wartości dla LG i 2XL lub pozostaw puste, aby obliczyć je proporcjonalnie ze wzoru na podstawie XL.
         </div>
       </div>
 
@@ -2286,6 +2305,12 @@
       if (layoutMarginXl < 32) layoutMarginXl = 32;
       if (layoutMarginXl > 200) layoutMarginXl = 200;
 
+      const lgVal = document.getElementById("layout-margin-lg").value.trim();
+      const layoutMarginLg = lgVal !== "" ? Math.max(16, Math.min(parseInt(lgVal, 10) || 0, 200)) : null;
+
+      const val2xl = document.getElementById("layout-margin-2xl").value.trim();
+      const layoutMargin2xl = val2xl !== "" ? Math.max(32, Math.min(parseInt(val2xl, 10) || 0, 300)) : null;
+
       const customGradientsPayload = customGradientsList.map(cg => ({
         name: (cg.name || 'custom').trim(),
         mode: cg.mode || 'all-8',
@@ -2317,6 +2342,8 @@
             piDisplay, piOthers,
             wrapDisplay, wrapOthers,
             layoutMarginXl,
+            layoutMarginLg,
+            layoutMargin2xl,
             customGradients: customGradientsPayload
           },
         },
@@ -2576,6 +2603,12 @@
         if (msg.wrapOthers !== undefined) document.getElementById("wrap-others").value = msg.wrapOthers;
 
         if (msg.layoutMarginXl !== undefined) document.getElementById("layout-margin-xl").value = msg.layoutMarginXl;
+        if (msg.layoutMarginLg !== undefined && msg.layoutMarginLg !== null) {
+          document.getElementById("layout-margin-lg").value = msg.layoutMarginLg;
+        }
+        if (msg.layoutMargin2xl !== undefined && msg.layoutMargin2xl !== null) {
+          document.getElementById("layout-margin-2xl").value = msg.layoutMargin2xl;
+        }
 
         if (msg.customGradients && Array.isArray(msg.customGradients)) {
           customGradientsList = msg.customGradients;

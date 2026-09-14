@@ -650,17 +650,22 @@ async function detectTypographyFromDocument() {
       }
     }
 
-    // 3. Detect layout margin for xl from "_layout" or "layout"
+    // 3. Detect layout margin for lg, xl, 2xl from "_layout" or "layout"
     const layoutCol = collections.find(c => c.name === "_layout" || c.name === "layout");
     if (layoutCol) {
-      const xlMode = layoutCol.modes.find(m => m.name === 'xl');
-      if (xlMode) {
-        const marginVar = allLocalVars.find(v => v.name === "margin" && v.variableCollectionId === layoutCol.id);
-        if (marginVar) {
-          const val = marginVar.valuesByMode[xlMode.modeId];
-          if (typeof val === 'number') {
-            detected.layoutMarginXl = val;
-          }
+      const marginVar = allLocalVars.find(v => v.name === "margin" && v.variableCollectionId === layoutCol.id);
+      if (marginVar) {
+        const xlMode = layoutCol.modes.find(m => m.name === 'xl');
+        if (xlMode && typeof marginVar.valuesByMode[xlMode.modeId] === 'number') {
+          detected.layoutMarginXl = marginVar.valuesByMode[xlMode.modeId];
+        }
+        const lgMode = layoutCol.modes.find(m => m.name === 'lg');
+        if (lgMode && typeof marginVar.valuesByMode[lgMode.modeId] === 'number') {
+          detected.layoutMarginLg = marginVar.valuesByMode[lgMode.modeId];
+        }
+        const m2xlMode = layoutCol.modes.find(m => m.name === '2xl');
+        if (m2xlMode && typeof marginVar.valuesByMode[m2xlMode.modeId] === 'number') {
+          detected.layoutMargin2xl = marginVar.valuesByMode[m2xlMode.modeId];
         }
       }
     }
@@ -820,6 +825,8 @@ figma.showUI(__html__, { width: 760, height: 750 });
     const savedWrap_D = await figma.clientStorage.getAsync('pluginWrap_D');
     const savedWrap_O = await figma.clientStorage.getAsync('pluginWrap_O');
     const savedLayoutMarginXl = await figma.clientStorage.getAsync('pluginLayoutMarginXl');
+    const savedLayoutMarginLg = await figma.clientStorage.getAsync('pluginLayoutMarginLg');
+    const savedLayoutMargin2xl = await figma.clientStorage.getAsync('pluginLayoutMargin2xl');
 
     const savedHeadersStyles = await figma.clientStorage.getAsync('pluginHeadersStyles');
     const savedBodyStyles = await figma.clientStorage.getAsync('pluginBodyStyles');
@@ -886,6 +893,8 @@ figma.showUI(__html__, { width: 760, height: 750 });
       wrapDisplay: detectedTypo.wrapDisplay || savedWrap_D || 'BALANCE',
       wrapOthers: detectedTypo.wrapOthers || savedWrap_O || 'BALANCE',
       layoutMarginXl: detectedTypo.layoutMarginXl !== undefined ? detectedTypo.layoutMarginXl : (savedLayoutMarginXl !== undefined ? savedLayoutMarginXl : 72),
+      layoutMarginLg: detectedTypo.layoutMarginLg !== undefined ? detectedTypo.layoutMarginLg : (savedLayoutMarginLg !== undefined ? savedLayoutMarginLg : null),
+      layoutMargin2xl: detectedTypo.layoutMargin2xl !== undefined ? detectedTypo.layoutMargin2xl : (savedLayoutMargin2xl !== undefined ? savedLayoutMargin2xl : null),
       customGradients: savedCustomGradients || []
     });
 
@@ -1206,7 +1215,7 @@ figma.ui.onmessage = async (msg) => {
   if (msg.type === 'create-palette') {
     const seeds = msg.seeds;
     const remValue = 16;
-    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, buttonHoverPreset: msgButtonHoverPreset, stylePreset, baseFontSize, lhHeading, lhDisplay, lhOthers, lsHeading, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, customGradients } = msg;
+    const { radiusPreset: msgRadiusPreset, spacingPreset: msgSpacingPreset, buttonHoverPreset: msgButtonHoverPreset, stylePreset, baseFontSize, lhHeading, lhDisplay, lhOthers, lsHeading, lsDisplay, lsOthers, psDisplay, psOthers, piDisplay, piOthers, wrapDisplay, wrapOthers, layoutMarginXl, layoutMarginLg, layoutMargin2xl, customGradients } = msg;
     const buttonHoverPreset = msgButtonHoverPreset || 'color';
     const targetWrapDisplay = wrapDisplay || 'BALANCE';
     const targetWrapOthers = wrapOthers || 'BALANCE';
@@ -1298,6 +1307,8 @@ figma.ui.onmessage = async (msg) => {
       await figma.clientStorage.setAsync('pluginWrap_D', targetWrapDisplay);
       await figma.clientStorage.setAsync('pluginWrap_O', targetWrapOthers);
       await figma.clientStorage.setAsync('pluginLayoutMarginXl', layoutMarginXl);
+      await figma.clientStorage.setAsync('pluginLayoutMarginLg', layoutMarginLg);
+      await figma.clientStorage.setAsync('pluginLayoutMargin2xl', layoutMargin2xl);
       await figma.clientStorage.setAsync('pluginCustomGradients', customGradients || []);
 
       async function resolveMetric(value, col, modeId) {
@@ -3340,13 +3351,19 @@ figma.ui.onmessage = async (msg) => {
         layoutCollection = figma.variables.createVariableCollection(layoutColName);
       }
 
-      const layoutModesMap = ensureCollectionModes(layoutCollection, ['sm', 'md', 'lg', 'xl']);
+      const layoutModesMap = ensureCollectionModes(layoutCollection, ['sm', 'md', 'lg', 'xl', '2xl']);
       const m_xl = Math.max(32, Math.min(parseInt(layoutMarginXl, 10) || 72, 200));
-      const m_lg = Math.round(m_xl * (1366 / 1920));
+      const m_lg = (layoutMarginLg !== null && layoutMarginLg !== undefined)
+        ? Math.max(16, Math.min(parseInt(layoutMarginLg, 10), 200))
+        : Math.round(m_xl * (1366 / 1536));
+      const m_2xl = (layoutMargin2xl !== null && layoutMargin2xl !== undefined)
+        ? Math.max(32, Math.min(parseInt(layoutMargin2xl, 10), 300))
+        : Math.round(m_xl * (1920 / 1536));
 
       const layoutConfigs = [
-        { name: 'xl', range: '1367 - 1920', count: 16, margin: m_xl, gutter: 16, maxWidth: 1920, maxHeight: 1080, maxElementWidth: 640 },
-        { name: 'lg', range: '801 - 1366', count: 12, margin: m_lg, gutter: 16, maxWidth: 1366, maxHeight: 768, maxElementWidth: 560 },
+        { name: '2xl', range: '>= 1920', count: 16, margin: m_2xl, gutter: 16, maxWidth: 1920, maxHeight: 1080, maxElementWidth: 640 },
+        { name: 'xl', range: '1536 - 1919', count: 16, margin: m_xl, gutter: 16, maxWidth: 1536, maxHeight: 960, maxElementWidth: 640 },
+        { name: 'lg', range: '801 - 1535', count: 12, margin: m_lg, gutter: 16, maxWidth: 1366, maxHeight: 768, maxElementWidth: 560 },
         { name: 'md', range: '441 - 800', count: 8, margin: 32, gutter: 16, maxWidth: 800, maxHeight: 1280, maxElementWidth: 480 },
         { name: 'sm', range: '<= 393', count: 4, margin: 16, gutter: 16, maxWidth: 393, maxHeight: 852, maxElementWidth: 361 }
       ];
@@ -3422,8 +3439,18 @@ figma.ui.onmessage = async (msg) => {
         const maxHeightAlias = await resolveMetric(conf.maxHeight, null, null);
         smartSetValueForMode(layoutVarsMap['maxHeight/screen'], modeId, maxHeightAlias ? { type: 'VARIABLE_ALIAS', id: maxHeightAlias } : conf.maxHeight);
 
-        // maxWidth/content = screen - 2 * margin
-        const contentWidth = conf.maxWidth - 2 * conf.margin;
+        // maxWidth/content = (next breakpoint maxWidth || this breakpoint maxWidth) - 2 * margin
+        const nextBreakpointMap = {
+          sm: 'md',
+          md: 'lg',
+          lg: 'xl',
+          xl: '2xl',
+          '2xl': null
+        };
+        const nextBpName = nextBreakpointMap[conf.name];
+        const nextConf = nextBpName ? layoutConfigs.find(c => c.name === nextBpName) : null;
+        const targetScreenWidth = nextConf ? nextConf.maxWidth : conf.maxWidth;
+        const contentWidth = targetScreenWidth - 2 * conf.margin;
         smartSetValueForMode(layoutVarsMap['maxWidth/content'], modeId, contentWidth);
 
         // minWidth is constant 328
@@ -3449,7 +3476,7 @@ figma.ui.onmessage = async (msg) => {
         mainGridStyle = figma.createGridStyle();
         mainGridStyle.name = mainStyleName;
       }
-      mainGridStyle.description = "Main layout style. Responsive to Frame's layout mode (sm/md/lg/xl).";
+      mainGridStyle.description = "Main layout style. Responsive to Frame's layout mode (sm/md/lg/xl/2xl).";
 
       const xlConf = layoutConfigs.find(c => c.name === 'xl');
       let layoutGrid = {
