@@ -1632,6 +1632,7 @@ figma.ui.onmessage = async (msg) => {
         // 7. Constant / Static Surfaces (Theme-independent)
         { name: "surfaceDark", oldName: ["surfaceDark", "surfaceStaticDark"], light: "neutral/5", lightContrast: "neutral/0", dark: "neutral/5", darkContrast: "neutral/0", accessibility: "neutral/0" },
         { name: "onSurfaceDark", oldName: ["onSurfaceDark", "onSurfaceStaticDark"], light: "neutral/90", lightContrast: "neutral/98", dark: "neutral/90", darkContrast: "neutral/98", accessibility: "neutral/100" },
+        { name: "onSurfaceDarkWhite", oldName: ["onSurfaceDarkWhite", "onSurfaceDarkBright"], light: "neutral/100", lightContrast: "neutral/100", dark: "neutral/100", darkContrast: "neutral/100", accessibility: "neutral/100" },
         { name: "surfaceBright", oldName: ["surfaceLow", "surfaceMax", "layerLow", "layerLower", "layerMax", "canvasMax"], light: "neutral/100", lightContrast: "neutral/100", dark: "neutral/100", darkContrast: "neutral/100", accessibility: "neutral/100" },
         { name: "onSurfaceBright", light: "neutral/10", lightContrast: "neutral/5", dark: "neutral/10", darkContrast: "neutral/5", accessibility: "neutral/5" },
 
