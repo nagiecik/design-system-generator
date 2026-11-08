@@ -1,0 +1,17 @@
+{
+  "name": "design-system-generator",
+  "version": "1.0.0",
+  "description": "Figma plugin for generating and maintaining design system tokens, variables, and styles",
+  "main": "code.js",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "*",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.3.2"
+  }
+}
+

@@ -2,6 +2,11 @@
 node_modules/
 package-lock.json
 
+# Local backups
+_backup_monolith/
+*.bak.js
+*.bak
+
 # OS files
 .DS_Store
 Thumbs.db

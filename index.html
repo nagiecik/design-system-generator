@@ -487,6 +487,78 @@
       background: #2a2a2a;
     }
 
+    .custom-colors-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .custom-color-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #171717;
+      border: 1px solid #2d2d2d;
+      border-radius: 8px;
+      padding: 8px 10px;
+      transition: border-color 0.15s;
+    }
+
+    .custom-color-row:hover {
+      border-color: #3d3d3d;
+    }
+
+    .custom-color-name-input {
+      background: #222;
+      border: 1px solid #383838;
+      color: #eee;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      flex-grow: 1;
+      font-weight: 500;
+      box-sizing: border-box;
+    }
+
+    .custom-color-name-input:focus {
+      border-color: #18a0fb;
+      outline: none;
+    }
+
+    .custom-color-swatch {
+      width: 32px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+
+    .custom-color-swatch:hover {
+      transform: scale(1.06);
+      border-color: #fff;
+    }
+
+    .custom-color-hex-input {
+      background: #222;
+      border: 1px solid #383838;
+      color: #fff;
+      padding: 5px 6px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      width: 70px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .custom-color-hex-input:focus {
+      border-color: #18a0fb;
+      outline: none;
+    }
+
     /* --- MODERN FIGMA COLOR PICKER MODAL --- */
     #picker-modal {
       display: none;
@@ -1015,6 +1087,15 @@
     </button>
   </div>
 
+  <!-- Local Token Bridge Status Bar -->
+  <div id="bridge-status-bar" style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; padding: 6px 10px; background: #f7f7f9; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.06);">
+    <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <span id="bridge-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #9CA3AF; display: inline-block; flex-shrink: 0; transition: background 0.3s ease;"></span>
+      <span id="bridge-text" style="font-size: 11px; color: #6B7280; font-family: Inter, sans-serif;">Mostek: sprawdzanie localhost:3050...</span>
+    </div>
+    <button type="button" id="bridge-refresh-btn" style="background: none; border: none; font-size: 10px; color: #18A0FB; cursor: pointer; padding: 2px 4px; text-decoration: underline;" title="Sprawdź połączenie z lokalnym mostkiem">Sprawdź</button>
+  </div>
+
   <!-- ADVANCED OPTIONS MODAL -->
   <div id="advanced-modal">
     <div class="advanced-content">
@@ -1076,6 +1157,8 @@
               <span class="field-sublabel">Default</span>
               <select id="lh-others" class="font-select style-select">
                 <option value="default" selected>Default (+16px)</option>
+                <option value="small">Small (+12px)</option>
+                <option value="extra-small">ExtraSmall (+8px)</option>
                 <option value="1">1.0 (100%)</option>
                 <option value="1.1">1.1 (110%)</option>
                 <option value="1.15">1.15 (115%)</option>
@@ -1151,14 +1234,14 @@
         <div class="row-content">
           <div class="twin-inputs">
             <div class="field-stack">
-              <span class="field-sublabel">Display</span>
+              <span class="field-sublabel">Heading</span>
               <div class="input-with-unit">
                 <input type="number" id="ps-display" step="1" value="0" />
                 <span class="unit-tag">px</span>
               </div>
             </div>
             <div class="field-stack">
-              <span class="field-sublabel">Text</span>
+              <span class="field-sublabel">Default</span>
               <div class="input-with-unit">
                 <input type="number" id="ps-others" step="1" value="0" />
                 <span class="unit-tag">px</span>
@@ -1173,14 +1256,14 @@
         <div class="row-content">
           <div class="twin-inputs">
             <div class="field-stack">
-              <span class="field-sublabel">Display</span>
+              <span class="field-sublabel">Heading</span>
               <div class="input-with-unit">
                 <input type="number" id="pi-display" step="1" value="0" />
                 <span class="unit-tag">px</span>
               </div>
             </div>
             <div class="field-stack">
-              <span class="field-sublabel">Text</span>
+              <span class="field-sublabel">Default</span>
               <div class="input-with-unit">
                 <input type="number" id="pi-others" step="1" value="0" />
                 <span class="unit-tag">px</span>
@@ -1220,6 +1303,19 @@
         <div style="font-size: 10px; color: #777; margin-top: 4px; line-height: 1.4;">
           Marginesy dla breakpointów: wpisz customowe wartości dla LG i 2XL lub pozostaw puste, aby obliczyć je proporcjonalnie ze wzoru na podstawie XL.
         </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="modal-section-header">
+        <span style="font-weight: 600; font-size: 13px; color: #eee; text-transform: uppercase; letter-spacing: 0.5px;">Custom Colors</span>
+        <button type="button" id="add-color-btn" class="small-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Color
+        </button>
+      </div>
+      <div id="custom-colors-container" class="custom-colors-container">
+        <!-- Rendered dynamically -->
       </div>
 
       <div class="separator"></div>
@@ -1342,6 +1438,16 @@
             if (previewBar && customGradientsList[cardIdx]) {
               const gradStops = customGradientsList[cardIdx].stops;
               previewBar.style.background = `linear-gradient(90deg, ${gradStops.map(s => `${s.color} ${s.position}%`).join(', ')})`;
+            }
+          }
+        } else if (swatch.dataset.role === 'custom-color') {
+          const row = swatch.closest('.custom-color-row');
+          if (row) {
+            const inp = row.querySelector('.custom-color-hex-input');
+            if (inp) inp.value = hex;
+            const cIdx = parseInt(row.dataset.index, 10);
+            if (customColorsList[cIdx]) {
+              customColorsList[cIdx].color = hex;
             }
           }
         }
@@ -1695,6 +1801,106 @@
         renderAllGradientCards();
       });
     }
+
+    // Custom Colors Management
+    let customColorsList = [];
+
+    function createCustomColorRowElement(item, index) {
+      const row = document.createElement('div');
+      row.className = 'custom-color-row';
+      row.dataset.index = index;
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'custom-color-name-input';
+      nameInput.placeholder = 'Color name (e.g. brand, accent)';
+      nameInput.value = item.name || `custom-${index + 1}`;
+      nameInput.addEventListener('input', () => {
+        item.name = nameInput.value.trim() || 'custom';
+      });
+
+      const swatch = document.createElement('div');
+      swatch.className = 'custom-color-swatch';
+      swatch.dataset.role = 'custom-color';
+      swatch.dataset.color = item.color || '#6750A4';
+      swatch.style.backgroundColor = item.color || '#6750A4';
+      swatch.title = 'Click to pick color';
+      swatch.addEventListener('click', openPicker);
+
+      const hexInp = document.createElement('input');
+      hexInp.type = 'text';
+      hexInp.className = 'custom-color-hex-input';
+      hexInp.maxLength = 7;
+      hexInp.value = item.color || '#6750A4';
+      const onHexChange = () => {
+        let val = hexInp.value.trim();
+        if (!val.startsWith('#')) val = '#' + val;
+        if (/^#[0-9A-F]{6}$/i.test(val)) {
+          swatch.style.backgroundColor = val;
+          swatch.dataset.color = val;
+          item.color = val;
+        }
+      };
+      hexInp.addEventListener('input', onHexChange);
+      hexInp.addEventListener('change', onHexChange);
+      hexInp.addEventListener('blur', () => {
+        let val = hexInp.value.trim();
+        if (!val.startsWith('#')) val = '#' + val;
+        if (!/^#[0-9A-F]{6}$/i.test(val)) {
+          hexInp.value = item.color || '#6750A4';
+        }
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'icon-btn-del';
+      delBtn.innerHTML = '✕';
+      delBtn.title = 'Remove this color';
+      delBtn.addEventListener('click', () => {
+        customColorsList.splice(index, 1);
+        renderAllCustomColors();
+      });
+
+      row.appendChild(nameInput);
+      row.appendChild(swatch);
+      row.appendChild(hexInp);
+      row.appendChild(delBtn);
+
+      return row;
+    }
+
+    function renderAllCustomColors() {
+      const container = document.getElementById('custom-colors-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (customColorsList.length === 0) {
+        const emptyHint = document.createElement('div');
+        emptyHint.style.cssText = 'font-size: 11px; color: #777; font-style: italic; padding: 4px 0 10px 0;';
+        emptyHint.innerText = 'No custom colors defined yet. Click "+ Add Color" to create one.';
+        container.appendChild(emptyHint);
+        return;
+      }
+
+      customColorsList.forEach((item, idx) => {
+        const rowEl = createCustomColorRowElement(item, idx);
+        container.appendChild(rowEl);
+      });
+    }
+
+    const addColorBtn = document.getElementById('add-color-btn');
+    if (addColorBtn) {
+      addColorBtn.addEventListener('click', () => {
+        const newIdx = customColorsList.length + 1;
+        customColorsList.push({
+          name: `custom-${newIdx}`,
+          color: '#6750A4'
+        });
+        renderAllCustomColors();
+      });
+    }
+
+    renderAllCustomColors();
 
     // ==========================================
     // MODERN FIGMA COLOR PICKER SYSTEM
@@ -2311,6 +2517,11 @@
       const val2xl = document.getElementById("layout-margin-2xl").value.trim();
       const layoutMargin2xl = val2xl !== "" ? Math.max(32, Math.min(parseInt(val2xl, 10) || 0, 300)) : null;
 
+      const customColorsPayload = customColorsList.map(cc => ({
+        name: (cc.name || 'custom').trim(),
+        color: cc.color || '#6750A4'
+      })).filter(cc => cc.name && cc.color);
+
       const customGradientsPayload = customGradientsList.map(cg => ({
         name: (cg.name || 'custom').trim(),
         mode: cg.mode || 'all-8',
@@ -2344,6 +2555,7 @@
             layoutMarginXl,
             layoutMarginLg,
             layoutMargin2xl,
+            customColors: customColorsPayload,
             customGradients: customGradientsPayload
           },
         },
@@ -2492,6 +2704,89 @@
       updateFontStylesUI('body', e.target.value);
     });
 
+    // --- Local Token Bridge Integration ---
+    function updateBridgeUI(isOnline, text) {
+      const dot = document.getElementById("bridge-dot");
+      const label = document.getElementById("bridge-text");
+      if (!dot || !label) return;
+      if (isOnline) {
+        dot.style.background = "#10B981";
+        dot.style.boxShadow = "0 0 6px rgba(16, 185, 129, 0.4)";
+        label.style.color = "#047857";
+        label.textContent = text || "Mostek aktywny (localhost:3050)";
+      } else {
+        dot.style.background = "#9CA3AF";
+        dot.style.boxShadow = "none";
+        label.style.color = "#6B7280";
+        label.textContent = text || "Mostek offline (localhost:3050)";
+      }
+    }
+
+    const BRIDGE_URLS = ["http://localhost:3050"];
+    let activeBridgeUrl = "http://localhost:3050";
+
+    async function checkBridgeStatus() {
+      for (const url of BRIDGE_URLS) {
+        try {
+          const res = await fetch(`${url}/status`, { method: "GET" });
+          if (res.ok) {
+            activeBridgeUrl = url;
+            updateBridgeUI(true, "Mostek online (localhost:3050)");
+            return true;
+          }
+        } catch (e) {}
+      }
+      updateBridgeUI(false, "Mostek offline (localhost:3050)");
+      return false;
+    }
+
+    async function sendTokensToBridge(jsonString, isAutoSync = false) {
+      for (const url of [activeBridgeUrl, ...BRIDGE_URLS.filter(u => u !== activeBridgeUrl)]) {
+        try {
+          const response = await fetch(`${url}/api/tokens`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: jsonString
+          });
+          if (response.ok) {
+            activeBridgeUrl = url;
+            const now = new Date().toLocaleTimeString();
+            updateBridgeUI(true, `Zsynchronizowano z projektem! (${now})`);
+            return true;
+          }
+        } catch (err) {}
+      }
+      updateBridgeUI(false, "Mostek offline (localhost:3050)");
+      return false;
+    }
+
+    function downloadJsonFile(jsonString, filename = "variables.json") {
+      try {
+        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (e) {
+        console.error("Download failed:", e);
+      }
+    }
+
+    const bridgeRefreshBtn = document.getElementById("bridge-refresh-btn");
+    if (bridgeRefreshBtn) {
+      bridgeRefreshBtn.addEventListener("click", () => {
+        checkBridgeStatus();
+      });
+    }
+
+    // Check status on load and poll every 30s
+    setTimeout(checkBridgeStatus, 500);
+    setInterval(checkBridgeStatus, 30000);
+
     const exportBtn = document.getElementById("export-vars-btn");
     if (exportBtn) {
       exportBtn.addEventListener("click", () => {
@@ -2504,19 +2799,15 @@
       if (!msg) return;
 
       if (msg.type === "export-variables-result") {
-        try {
-          const blob = new Blob([msg.json], { type: "application/json;charset=utf-8" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = msg.filename || "variables.json";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-        } catch (e) {
-          console.error("Download failed:", e);
-        }
+        const isAutoSync = Boolean(msg.autoSync);
+
+        // Attempt sending payload to local token bridge
+        sendTokensToBridge(msg.json, isAutoSync).then((synced) => {
+          // If manual export (not autoSync) and bridge didn't sync, download file as fallback
+          if (!isAutoSync) {
+            downloadJsonFile(msg.json, msg.filename || "variables.json");
+          }
+        });
         return;
       }
 
@@ -2609,6 +2900,13 @@
         if (msg.layoutMargin2xl !== undefined && msg.layoutMargin2xl !== null) {
           document.getElementById("layout-margin-2xl").value = msg.layoutMargin2xl;
         }
+
+        if (msg.customColors && Array.isArray(msg.customColors)) {
+          customColorsList = msg.customColors;
+        } else {
+          customColorsList = [];
+        }
+        renderAllCustomColors();
 
         if (msg.customGradients && Array.isArray(msg.customGradients)) {
           customGradientsList = msg.customGradients;

@@ -9,8 +9,12 @@
   ],
   "networkAccess": {
     "allowedDomains": [
-      "none"
-    ]
+      "http://localhost:3050"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:3050"
+    ],
+    "reasoning": "Synchronize design system variables with local development bridge"
   },
   "documentAccess": "dynamic-page"
 }
